@@ -8,7 +8,7 @@
     <color name="DOSText">#ffffff</color>
     <color name="DOSHighlightedText">#000000</color>
     <color name="DOSHighlightedBackground">#ffffff</color>
-    <color name="DOSReceiver">#353fc6</color>
-    <color name="DOSSender">#d81717</color>
+    <color name="DOSSender">#353fc6</color>
+    <color name="DOSReceiver">#d81717</color>
 
 </resources>

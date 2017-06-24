@@ -2,6 +2,8 @@ package com.sanilk.chatcli2.themes.dos;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.Handler;
@@ -40,7 +42,12 @@ public class DOSThemeActivity extends ThemeActivity {
 
     Button tempExecButton;
 
+    //Sender is the current user and receiver is the other guy.
+    //I know, confusing
     private final static String SENDER="sanil";
+    private String currentReceiver="";
+
+    private boolean connected=false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,12 +63,61 @@ public class DOSThemeActivity extends ThemeActivity {
         uiHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg) {
-                String message=(String)msg.obj;
+                MessageTypeAndMessage messageTypeAndMessage=(MessageTypeAndMessage)msg.obj;
+                String message=messageTypeAndMessage.message;
+                MESSAGE_TYPE messageType=messageTypeAndMessage.messageType;
                 if(message!=null && message!="") {
-                    TextView newTextView = new TextView(context);
-                    newTextView.setText(message);
-                    newTextView.setTextColor(Color.WHITE);
-                    mainContainer.addView(newTextView);
+                    LinearLayout linearLayout=new LinearLayout(context);
+                    linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+                    linearLayout.setPadding(0,0,0,0);
+//                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
+                    TextView senderTextView = new TextView(context);
+                    TextView messageTextView = new TextView(context);
+                    senderTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+                    messageTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+                    if(Build.VERSION.SDK_INT>23) {
+                        switch (messageType){
+                            case DEFAULT:
+                                senderTextView.setText("SYSTEM>");
+                                senderTextView.setTextColor(getColor(R.color.DOSText));
+                                messageTextView.setTextColor(getColor(R.color.DOSText));
+                                break;
+                            case RECEIVED:
+                                senderTextView.setText(currentReceiver + ">");
+                                senderTextView.setTextColor(getColor(R.color.DOSReceiver));
+                                messageTextView.setTextColor(getColor(R.color.DOSReceiver));
+                                break;
+                            case SENT:
+                                senderTextView.setText(SENDER + ">");
+                                senderTextView.setTextColor(getColor(R.color.DOSSender));
+                                messageTextView.setTextColor(getColor(R.color.DOSSender));
+                                break;
+                        }
+                    }else{
+                        switch (messageType){
+                            case DEFAULT:
+                                senderTextView.setText("SYSTEM>");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSText));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSText));
+                                break;
+                            case RECEIVED:
+                                senderTextView.setText(currentReceiver + ">");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                                break;
+                            case SENT:
+                                senderTextView.setText(SENDER + ">");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                                break;
+                        }
+                    }
+                    senderTextView.setGravity(1);
+                    messageTextView.setGravity(3);
+                    messageTextView.setText(message);
+                    linearLayout.addView(senderTextView);
+                    linearLayout.addView(messageTextView);
+                    mainContainer.addView(linearLayout);
                 }
             }
         };
@@ -81,26 +137,51 @@ public class DOSThemeActivity extends ThemeActivity {
     }
 
     public void splitAndProcessCommand(String cmd){
-        if(cmd.toCharArray()[0] == '@'){
+//        if(cmd.toCharArray()[0] == '@'){
             //It is a command
             String[] cmds=cmd.split(" ");
             processCommand(cmds);
-        }else{
-            displayMessage("Invalid");
-        }
+//        }else{
+//            displayMessage("Invalid");
+//        }
     }
 
     public void processCommand(String[] cmd){
+        String receiver;
         switch (cmd[0]){
             case "@conn":
-                String receiver = cmd[1];
-                displayMessage("Establishing connection to "+receiver+" ...");
-                //maybe add a percentage thing here. would need delete message method which deletes the last message though
-                establishConnection(SENDER, receiver);
-                break;
+                try {
+                    receiver = cmd[1];
+                    displayMessage("Establishing connection to "+receiver+" ...", MESSAGE_TYPE.DEFAULT);
+                    //maybe add a percentage thing here. would need delete message method which deletes the last message though
+                    establishConnection(SENDER, receiver);
+                    connected=true;
+                    currentReceiver=receiver;
+                    break;
+                }catch (ArrayIndexOutOfBoundsException e){
+                    displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.DEFAULT);
+                }
             case "@disconn":
+                try {
+                    receiver = cmd[1];
+                    displayMessage("opposite of establishing ??? connection to " + receiver + " ...", MESSAGE_TYPE.DEFAULT);
+                }catch (ArrayIndexOutOfBoundsException e){
+                    displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to disconnect to ??", MESSAGE_TYPE.DEFAULT);
+                }
+                currentReceiver="";
+                connected=false;
                 break;
+            default:
+                if(connected){
+                    String message="";
+                    for(int i=0;i<cmd.length;i++){
+                        message+=cmd[i];
+                    }
+                    displayMessage(message, MESSAGE_TYPE.SENT);
+                    sendMessage(message);
+                }
         }
+
     }
 
     public void establishConnection(String sender, String receiver){
@@ -108,19 +189,19 @@ public class DOSThemeActivity extends ThemeActivity {
     }
 
     @Override
-    public void displayMessage(String message) {
-        receiverThreadRunnable.setMessage(message);
+    public void displayMessage(String message, ThemeActivity.MESSAGE_TYPE messageType) {
+        receiverThreadRunnable.setMessage(message, messageType);
     }
 
     @Override
-    public void sendMessage() {
-//        themeComms.sendMessage(messageEditText.getText().toString());
+    public void sendMessage(String message) {
+        themeComms.sendMessage(message);
     }
 
     @Override
     public void receiveMessage(){
         if(themeCommsRegistered) {
-            displayMessage(themeComms.receiveMessages());
+            displayMessage(themeComms.receiveMessages(), MESSAGE_TYPE.RECEIVED);
         }
     }
 
@@ -132,25 +213,38 @@ public class DOSThemeActivity extends ThemeActivity {
 
     private class ReceiverThreadRunnable implements Runnable{
         String message="";
+        ThemeActivity.MESSAGE_TYPE messageType;
 
-        public void setMessage(String string){
+        public void setMessage(String string, ThemeActivity.MESSAGE_TYPE messageType){
             message+=string;
+            this.messageType=messageType;
         }
 
         @Override
         public void run() {
             while(true) {
+                Message msg=Message.obtain();
+                MessageTypeAndMessage messageTypeAndMessage=new MessageTypeAndMessage(messageType, message);
+                msg.obj=messageTypeAndMessage;
+                uiHandler.sendMessage(msg);
+                message="";
+                receiveMessage();
                 try {
                     Thread.sleep(500);
                 }catch (Exception e){
 
                 }
-                receiveMessage();
-                Message msg=Message.obtain();
-                msg.obj=message;
-                uiHandler.sendMessage(msg);
-                message="";
             }
+        }
+    }
+
+    private class MessageTypeAndMessage{
+        MESSAGE_TYPE messageType;
+        String message;
+
+        public MessageTypeAndMessage(MESSAGE_TYPE messageType, String message){
+            this.message=message;
+            this.messageType=messageType;
         }
     }
 }

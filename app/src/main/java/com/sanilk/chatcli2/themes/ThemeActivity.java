@@ -10,6 +10,10 @@ import android.os.Bundle;
 public abstract class ThemeActivity extends Activity {
     ThemeComms themeComms;
 
+    public enum MESSAGE_TYPE{
+        SENT, RECEIVED, DEFAULT
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,11 +27,11 @@ public abstract class ThemeActivity extends Activity {
         themeComms=new ThemeComms(user, pass);
     }
 
-    public void displayMessage(String message){
+    public void displayMessage(String message, MESSAGE_TYPE message_type){
         System.out.println(message);
     }
 
-    public void sendMessage(){
+    public void sendMessage(String message){
 
     }
 
