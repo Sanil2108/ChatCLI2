@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">ChatCLI2</string>
     <string name="title_activity_dostheme">DOSThemeActivity</string>
+
+    <string name="DOSOpeningMessage">Microsoft Windows [Version 10.0.14393]\n
+(c) 2016 Microsoft Corporation. All rights reserved.</string>
 </resources>

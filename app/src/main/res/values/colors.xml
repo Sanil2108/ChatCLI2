@@ -3,4 +3,12 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="DOSBackground">#000000</color>
+    <color name="DOSText">#ffffff</color>
+    <color name="DOSHighlightedText">#000000</color>
+    <color name="DOSHighlightedBackground">#ffffff</color>
+    <color name="DOSReceiver">#353fc6</color>
+    <color name="DOSSender">#d81717</color>
+
 </resources>

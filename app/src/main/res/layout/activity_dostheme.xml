@@ -1,45 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:theme="@style/AppTheme"
+<LinearLayout android:layout_width="match_parent"
     android:orientation="vertical"
-    tools:context="com.sanilk.chatcli2.themes.dos.DOSThemeActivity">
+    android:layout_height="match_parent"
+    android:background="@color/DOSBackground"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/message_container"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme"
+        android:orientation="vertical"
+        tools:context="com.sanilk.chatcli2.themes.dos.DOSThemeActivity">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/main_container"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:fontFamily="monospace"
+                    android:textColor="@color/DOSText"
+                    android:text="@string/DOSOpeningMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+            </LinearLayout>
+
+        </ScrollView>
+
+        <!--<EditText-->
+            <!--android:id="@+id/dos_user"-->
+            <!--android:text="sanil"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content" />-->
+
+        <!--<EditText-->
+            <!--android:text="sanil2"-->
+            <!--android:id="@+id/dos_receiver"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content" />-->
+
+        <!--<EditText-->
+            <!--android:id="@+id/dos_message_edit"-->
+            <!--android:text="message"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content" />-->
+
+        <!--<Button-->
+            <!--android:id="@+id/dos_send"-->
+            <!--android:text="Send"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content" />-->
+
+        <!--&lt;!&ndash;<Button&ndash;&gt;-->
+            <!--&lt;!&ndash;android:text="Receive"&ndash;&gt;-->
+            <!--&lt;!&ndash;android:id="@+id/receiverButton"&ndash;&gt;-->
+            <!--&lt;!&ndash;android:layout_width="wrap_content"&ndash;&gt;-->
+            <!--&lt;!&ndash;android:layout_height="wrap_content" />&ndash;&gt;-->
+
+        <!--<TextView-->
+            <!--android:id="@+id/dos_message"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content" />-->
+
+    </LinearLayout>
 
     <EditText
-        android:id="@+id/dos_user"
-        android:text="sanil"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <EditText
-        android:text="sanil2"
-        android:id="@+id/dos_receiver"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <EditText
-        android:id="@+id/dos_message_edit"
-        android:text="message"
-        android:layout_width="wrap_content"
+        android:maxLines="1"
+        android:id="@+id/dos_cli"
+        android:textColor="@color/DOSText"
+        android:text=" @conn sanil2"
+        android:fontFamily="monospace"
+        android:textStyle="normal"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
     <Button
-        android:id="@+id/dos_send"
-        android:text="Send"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <!--<Button-->
-        <!--android:text="Receive"-->
-        <!--android:id="@+id/receiverButton"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content" />-->
-
-    <TextView
-        android:id="@+id/dos_message"
+        android:id="@+id/temp_exec_button"
+        android:text="Exec"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />
 
