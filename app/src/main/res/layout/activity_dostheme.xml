@@ -79,7 +79,7 @@
         android:maxLines="1"
         android:id="@+id/dos_cli"
         android:textColor="@color/DOSText"
-        android:text=" @conn sanil2"
+        android:text="\@conn sanil2"
         android:fontFamily="monospace"
         android:textStyle="normal"
         android:layout_width="match_parent"

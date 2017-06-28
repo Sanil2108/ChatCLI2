@@ -4,4 +4,30 @@
 
     <string name="DOSOpeningMessage">Microsoft Windows [Version 10.0.14393]\n
 (c) 2016 Microsoft Corporation. All rights reserved.</string>
+
+    <string-array name="help">
+        <item>\@conn [name]</item>
+        <item>Connects to the user with the name you entered</item>
+
+        <item>\@disconn</item>
+        <item>Disconnects you from the current user</item>
+
+        <item>\@check</item>
+        <item>Checks for new messages</item>
+
+        <item>\@help_advanced</item>
+        <item>Provides advanced help</item>
+
+        <item>\@logout</item>
+        <item>Logs out the current user</item>
+
+    </string-array>
+
+    <string-array name="help_advanced">
+        <item>\@conn [name\r]</item>
+        <item>If \'r\' is entered then the connection is to a random person </item>
+
+        <item>\@ping</item>
+        <item>\@pings the server and displays the time taken for the response</item>
+    </string-array>
 </resources>

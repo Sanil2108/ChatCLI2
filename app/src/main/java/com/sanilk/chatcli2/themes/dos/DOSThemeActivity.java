@@ -23,6 +23,7 @@ import com.sanilk.chatcli2.themes.ThemeActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class DOSThemeActivity extends ThemeActivity {
 
@@ -41,6 +42,10 @@ public class DOSThemeActivity extends ThemeActivity {
     ReceiverThreadRunnable receiverThreadRunnable;
 
     Button tempExecButton;
+
+    TextView senderTextView;
+    TextView messageTextView;
+
 
     //Sender is the current user and receiver is the other guy.
     //I know, confusing
@@ -63,70 +68,14 @@ public class DOSThemeActivity extends ThemeActivity {
         uiHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg) {
-                MessageTypeAndMessage messageTypeAndMessage=(MessageTypeAndMessage)msg.obj;
-                String message=messageTypeAndMessage.message;
-                MESSAGE_TYPE messageType=messageTypeAndMessage.messageType;
-                if(message!=null && message!="") {
-                    LinearLayout linearLayout=new LinearLayout(context);
-                    linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-                    linearLayout.setPadding(0,0,0,0);
-//                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
-                    TextView senderTextView = new TextView(context);
-                    TextView messageTextView = new TextView(context);
-                    senderTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-                    messageTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-                    if(Build.VERSION.SDK_INT>23) {
-                        switch (messageType){
-                            case DEFAULT:
-                                senderTextView.setText("SYSTEM>");
-                                senderTextView.setTextColor(getColor(R.color.DOSText));
-                                messageTextView.setTextColor(getColor(R.color.DOSText));
-                                break;
-                            case RECEIVED:
-                                senderTextView.setText(currentReceiver + ">");
-                                senderTextView.setTextColor(getColor(R.color.DOSReceiver));
-                                messageTextView.setTextColor(getColor(R.color.DOSReceiver));
-                                break;
-                            case SENT:
-                                senderTextView.setText(SENDER + ">");
-                                senderTextView.setTextColor(getColor(R.color.DOSSender));
-                                messageTextView.setTextColor(getColor(R.color.DOSSender));
-                                break;
-                        }
-                    }else{
-                        switch (messageType){
-                            case DEFAULT:
-                                senderTextView.setText("SYSTEM>");
-                                senderTextView.setTextColor(getResources().getColor(R.color.DOSText));
-                                messageTextView.setTextColor(getResources().getColor(R.color.DOSText));
-                                break;
-                            case RECEIVED:
-                                senderTextView.setText(currentReceiver + ">");
-                                senderTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
-                                messageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
-                                break;
-                            case SENT:
-                                senderTextView.setText(SENDER + ">");
-                                senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
-                                messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
-                                break;
-                        }
-                    }
-                    senderTextView.setGravity(1);
-                    messageTextView.setGravity(3);
-                    messageTextView.setText(message);
-                    linearLayout.addView(senderTextView);
-                    linearLayout.addView(messageTextView);
-                    mainContainer.addView(linearLayout);
-                }
+                handleMessageAgain(msg);
             }
         };
 
         tempExecButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String completeCommand = cli.getText().toString();
-                splitAndProcessCommand(completeCommand);
+                execButton();
             }
         });
 
@@ -134,6 +83,73 @@ public class DOSThemeActivity extends ThemeActivity {
         receiverThread=new Thread(receiverThreadRunnable);
         receiverThread.start();
 
+    }
+
+    public void handleMessageAgain(Message msg){
+        MessageTypeAndMessage messageTypeAndMessage=(MessageTypeAndMessage)msg.obj;
+        String message=messageTypeAndMessage.message;
+        MESSAGE_TYPE messageType=messageTypeAndMessage.messageType;
+
+        senderTextView = new TextView(context);
+        messageTextView = new TextView(context);
+
+        if(message!=null && message!="") {
+            LinearLayout linearLayout=new LinearLayout(context);
+            linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+            linearLayout.setPadding(0,0,0,0);
+//                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
+            senderTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+            messageTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+            if(Build.VERSION.SDK_INT>23) {
+                switch (messageType){
+                    case DEFAULT:
+                        senderTextView.setText("SYSTEM>");
+                        senderTextView.setTextColor(getColor(R.color.DOSText));
+                        messageTextView.setTextColor(getColor(R.color.DOSText));
+                        break;
+                    case RECEIVED:
+                        senderTextView.setText(currentReceiver + ">");
+                        senderTextView.setTextColor(getColor(R.color.DOSReceiver));
+                        messageTextView.setTextColor(getColor(R.color.DOSReceiver));
+                        break;
+                    case SENT:
+                        senderTextView.setText(SENDER + ">");
+                        senderTextView.setTextColor(getColor(R.color.DOSSender));
+                        messageTextView.setTextColor(getColor(R.color.DOSSender));
+                        break;
+                }
+            }else{
+                switch (messageType){
+                    case DEFAULT:
+                        senderTextView.setText("SYSTEM>");
+                        senderTextView.setTextColor(getResources().getColor(R.color.DOSText));
+                        messageTextView.setTextColor(getResources().getColor(R.color.DOSText));
+                        break;
+                    case RECEIVED:
+                        senderTextView.setText(currentReceiver + ">");
+                        senderTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                        messageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                        break;
+                    case SENT:
+                        senderTextView.setText(SENDER + ">");
+                        senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                        messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                        break;
+                }
+            }
+            senderTextView.setGravity(1);
+            messageTextView.setGravity(3);
+            messageTextView.setText(message);
+            linearLayout.addView(senderTextView);
+            linearLayout.addView(messageTextView);
+            mainContainer.addView(linearLayout);
+        }
+    }
+
+    public void execButton(){
+        String completeCommand = cli.getText().toString();
+        cli.setText("");
+        splitAndProcessCommand(completeCommand);
     }
 
     public void splitAndProcessCommand(String cmd){
@@ -157,25 +173,43 @@ public class DOSThemeActivity extends ThemeActivity {
                     establishConnection(SENDER, receiver);
                     connected=true;
                     currentReceiver=receiver;
-                    break;
+                    displayMessage("\nConnection succesfully established", MESSAGE_TYPE.DEFAULT);
                 }catch (ArrayIndexOutOfBoundsException e){
                     displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.DEFAULT);
                 }
+                break;
             case "@disconn":
                 try {
-                    receiver = cmd[1];
-                    displayMessage("opposite of establishing ??? connection to " + receiver + " ...", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
+                    destroyConnection(SENDER, currentReceiver);
+                    displayMessage("Connection succesfully broken", MESSAGE_TYPE.DEFAULT);
                 }catch (ArrayIndexOutOfBoundsException e){
                     displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to disconnect to ??", MESSAGE_TYPE.DEFAULT);
                 }
                 currentReceiver="";
                 connected=false;
                 break;
+            case "@help":
+                String[] help=getResources().getStringArray(R.array.help);
+                for(int i=0;i<help.length;i+=2){
+                    displayMessage(help[i]+" : "+help[i+1]+"\n", MESSAGE_TYPE.DEFAULT);
+                }
+                break;
+            case "@help_advanced":
+                String[] helpAdvanced=getResources().getStringArray(R.array.help_advanced);
+                for(int i=0;i<helpAdvanced.length;i+=2){
+                    displayMessage(helpAdvanced[i]+" : "+helpAdvanced[i+1]+"\n", MESSAGE_TYPE.DEFAULT);
+                }
+                break;
+            case "@logout":
+                break;
+            case "@ping":
+                break;
             default:
                 if(connected){
                     String message="";
                     for(int i=0;i<cmd.length;i++){
-                        message+=cmd[i];
+                        message+=cmd[i]+" ";
                     }
                     displayMessage(message, MESSAGE_TYPE.SENT);
                     sendMessage(message);
@@ -188,8 +222,15 @@ public class DOSThemeActivity extends ThemeActivity {
         registerThemeComms(sender, receiver);
     }
 
+    public void destroyConnection(String sender, String receiver){
+        //Un-registering theme comms and let the garbage collector do the work
+        themeCommsRegistered=false;
+        themeComms=null;
+    }
+
     @Override
     public void displayMessage(String message, ThemeActivity.MESSAGE_TYPE messageType) {
+        Log.d("DOSThemeActivity", message);
         receiverThreadRunnable.setMessage(message, messageType);
     }
 
