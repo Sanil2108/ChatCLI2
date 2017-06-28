@@ -2,8 +2,8 @@
     <string name="app_name">ChatCLI2</string>
     <string name="title_activity_dostheme">DOSThemeActivity</string>
 
-    <string name="DOSOpeningMessage">Microsoft Windows [Version 10.0.14393]\n
-(c) 2016 Microsoft Corporation. All rights reserved.</string>
+    <string name="DOSOpeningMessage">SOG Chat CLI - WinDOS [Version 0.5.14393]\n
+(c) 2017 com.sanilk.chatCLI </string>
 
     <string-array name="help">
         <item>\@conn [name]</item>

@@ -74,21 +74,29 @@
 
     </LinearLayout>
 
-    <EditText
-        android:textSize="@dimen/dos_font_size"
-        android:maxLines="1"
-        android:id="@+id/dos_cli"
-        android:textColor="@color/DOSText"
-        android:text="\@conn sanil2"
-        android:fontFamily="monospace"
-        android:textStyle="normal"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:orientation="horizontal"
+        android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/temp_exec_button"
-        android:text="Exec"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <EditText
+            android:layout_weight="99"
+            android:textSize="@dimen/dos_font_size"
+            android:id="@+id/dos_cli"
+            android:textColor="@color/DOSText"
+            android:text="\@conn sanil2"
+            android:fontFamily="monospace"
+            android:textStyle="normal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/temp_exec_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Exec" />
+
+    </LinearLayout>
 
 </LinearLayout>

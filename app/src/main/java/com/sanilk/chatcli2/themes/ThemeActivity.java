@@ -11,7 +11,7 @@ public abstract class ThemeActivity extends Activity {
     ThemeComms themeComms;
 
     public enum MESSAGE_TYPE{
-        SENT, RECEIVED, DEFAULT
+        SENT, RECEIVED, DEFAULT, ERROR
     }
 
     @Override

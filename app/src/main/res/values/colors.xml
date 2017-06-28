@@ -10,5 +10,7 @@
     <color name="DOSHighlightedBackground">#ffffff</color>
     <color name="DOSSender">#353fc6</color>
     <color name="DOSReceiver">#d81717</color>
+    <color name="DOSErrorBackground">#f00</color>
+    <color name="DOSErrorText">#fff</color>
 
 </resources>

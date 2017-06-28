@@ -12,6 +12,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -59,6 +60,8 @@ public class DOSThemeActivity extends ThemeActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dostheme);
 
+        getWindow().setSoftInputMode(
+                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         context=this;
 
         mainContainer=(LinearLayout) findViewById(R.id.main_container);
@@ -117,6 +120,13 @@ public class DOSThemeActivity extends ThemeActivity {
                         senderTextView.setTextColor(getColor(R.color.DOSSender));
                         messageTextView.setTextColor(getColor(R.color.DOSSender));
                         break;
+                    case ERROR:
+                        senderTextView.setText("ERROR>");
+                        senderTextView.setTextColor(getColor(R.color.DOSErrorText));
+                        messageTextView.setTextColor(getColor(R.color.DOSErrorText));
+                        senderTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
+                        messageTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
+                        break;
                 }
             }else{
                 switch (messageType){
@@ -134,6 +144,13 @@ public class DOSThemeActivity extends ThemeActivity {
                         senderTextView.setText(SENDER + ">");
                         senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
                         messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                        break;
+                    case ERROR:
+                        senderTextView.setText("ERROR>");
+                        senderTextView.setTextColor(getResources().getColor(R.color.DOSErrorText));
+                        messageTextView.setTextColor(getResources().getColor(R.color.DOSErrorText));
+                        senderTextView.setBackgroundColor(getResources().getColor(R.color.DOSErrorBackground));
+                        messageTextView.setBackgroundColor(getResources().getColor(R.color.DOSErrorBackground));
                         break;
                 }
             }
@@ -167,6 +184,13 @@ public class DOSThemeActivity extends ThemeActivity {
         switch (cmd[0]){
             case "@conn":
                 try {
+                    if(connected){
+                        displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
+                        destroyConnection(SENDER, currentReceiver);
+                        displayMessage("\nConnection successfully broken", MESSAGE_TYPE.DEFAULT);
+                        currentReceiver = "";
+                        connected = false;
+                    }
                     receiver = cmd[1];
                     displayMessage("Establishing connection to "+receiver+" ...", MESSAGE_TYPE.DEFAULT);
                     //maybe add a percentage thing here. would need delete message method which deletes the last message though
@@ -175,19 +199,19 @@ public class DOSThemeActivity extends ThemeActivity {
                     currentReceiver=receiver;
                     displayMessage("\nConnection succesfully established", MESSAGE_TYPE.DEFAULT);
                 }catch (ArrayIndexOutOfBoundsException e){
-                    displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.ERROR);
                 }
                 break;
             case "@disconn":
-                try {
+                if(!connected){
+                    displayMessage("You are not connected to anyone.", MESSAGE_TYPE.ERROR);
+                }else {
                     displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
                     destroyConnection(SENDER, currentReceiver);
-                    displayMessage("Connection succesfully broken", MESSAGE_TYPE.DEFAULT);
-                }catch (ArrayIndexOutOfBoundsException e){
-                    displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to disconnect to ??", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("\nConnection successfully broken", MESSAGE_TYPE.DEFAULT);
+                    currentReceiver = "";
+                    connected = false;
                 }
-                currentReceiver="";
-                connected=false;
                 break;
             case "@help":
                 String[] help=getResources().getStringArray(R.array.help);
