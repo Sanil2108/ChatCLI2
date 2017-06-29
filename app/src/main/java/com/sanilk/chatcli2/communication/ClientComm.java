@@ -21,6 +21,10 @@ public class ClientComm {
 
     }
 
+    public void registerClientComm(Client sender){
+        this.sender=sender;
+    }
+
     public void registerClientComm(Client receiver, Client sender){
         this.receiver=receiver;
         this.sender=sender;
@@ -38,9 +42,26 @@ public class ClientComm {
         }
     }
 
+    public void checkMessages(DataOutputStream dos, String[] senders){
+        try{
+            String allSenders="";
+            for(int i=0;i<senders.length;i++){
+                allSenders+=senders[i]+";";
+            }
+//            dos.writeUTF(sender.nick + ":SEND:" + "sanil2" + ":" + "abc");
+            dos.writeUTF(sender.nick+":CHECK::"+allSenders);
+            dos.flush();
+            dos.close();
+        }catch (Exception e){
+            System.out.println("Exception in ClientComm : ");
+            e.printStackTrace();
+        }
+    }
+
+
     public void receiveMessage(DataOutputStream dos){
         try{
-            dos.writeUTF(sender+":RECEIVE:");
+            dos.writeUTF(sender+":RECEIVE:"+receiver);
             dos.flush();
             dos.close();
         }catch (IOException e){

@@ -2,6 +2,7 @@
   <dictionary name="Admin">
     <words>
       <w>comms</w>
+      <w>disconn</w>
     </words>
   </dictionary>
 </component>

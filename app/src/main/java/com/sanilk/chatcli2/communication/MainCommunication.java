@@ -1,5 +1,7 @@
 package com.sanilk.chatcli2.communication;
 
+import android.util.Log;
+
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
@@ -22,17 +24,45 @@ public class MainCommunication {
 
     Thread inputThread;
     Thread outputThread;
+    Thread checkThread;
 
     ClientComm clientComm;
 
     URL url;
 
+    CheckHandler checkHandler;
     SenderHandler senderHandler;
     ReceiverHandler receiverHandler;
 
     ThemeComms themeComms;
 
+
     private boolean receiving=false;
+
+    private boolean stopReceiving=false;
+
+    public MainCommunication(String sender, ThemeComms themeComms){
+        this.sender=new Client(sender, DEFAULT_PASSWORD);
+        this.themeComms=themeComms;
+        try {
+            url = new URL(ADDRESS);
+            clientComm = ClientComm.getInstance();
+
+            checkHandler=new CheckHandler();
+            checkThread=new Thread(checkHandler);
+            checkThread.start();
+
+//            senderHandler=new SenderHandler();
+//            inputThread = new Thread(senderHandler);
+//            inputThread.start();
+
+            clientComm.registerClientComm(this.sender);
+
+        }catch (Exception e){
+            System.out.println("Exception in MainCommunication");
+            e.printStackTrace();
+        }
+    }
 
     public MainCommunication(String sender, String receiver, ThemeComms themeComms){
         this.themeComms=themeComms;
@@ -61,9 +91,13 @@ public class MainCommunication {
 
     public void startReceiving(){
         if(!receiving) {
-            outputThread.start();
             receiving = true;
+            outputThread.start();
         }
+    }
+
+    public void stopReceiving(){
+        stopReceiving=true;
     }
 
     public void sendMessage(final String message){
@@ -73,6 +107,10 @@ public class MainCommunication {
         senderHandler.newMessage(message);
     }
 
+    public void checkMessages(String[] allSenders){
+        checkHandler.startChecking(allSenders);
+    }
+
     private class ReceiverHandler implements Runnable{
         private static final long MILLISECONDS=1000;
 
@@ -80,6 +118,10 @@ public class MainCommunication {
         public void run() {
             while(true){
                 try{
+                    if(stopReceiving){
+                        stopReceiving=false;
+                        break;
+                    }
                     Thread.sleep(MILLISECONDS);
 
                     HttpURLConnection conn2=(HttpURLConnection)url.openConnection();
@@ -113,6 +155,100 @@ public class MainCommunication {
                     System.out.println("Exception in inputThread");
                     e.printStackTrace();
                 }
+            }
+        }
+
+    }
+
+    private class CheckHandler implements Runnable{
+        String[] allSenders;
+        boolean checking=false;
+
+        public CheckHandler(){
+
+        }
+
+        public void startChecking(String[] allSenders){
+            this.allSenders=allSenders;
+            checking=true;
+        }
+
+        @Override
+        public void run() {
+            while(true) {
+                try {
+                    Thread.sleep(1000);
+                    if (checking) {
+                        HttpURLConnection conn3 = (HttpURLConnection) url.openConnection();
+                        conn3.setRequestMethod("POST");
+                        conn3.setDoOutput(true);
+                        conn3.setDoInput(true);
+//                    conn3.setReadTimeout(1000);
+
+                        //Writing to the servlet
+                        DataOutputStream dos = new DataOutputStream(conn3.getOutputStream());
+
+                        clientComm.checkMessages(dos, allSenders);
+
+                        dos.flush();
+                        dos.close();
+
+                        int status=conn3.getResponseCode();
+                        if(status != HttpURLConnection.HTTP_OK){
+                            Log.d("MainCommunication", "Something wrong");
+                        }
+
+                        InputStream in = conn3.getInputStream();
+                        int c;
+                        String out="";
+                        while ((c = in.read()) != -1) {
+                            System.out.print((char) c);
+                            out+=((char)c)+"";
+                        }
+                        in.close();
+                        Log.d("MainCommunications", out);
+
+                        if(out!="" && out!=null){
+                            themeComms.newMessagesChecked(out);
+                        }
+
+                        conn3.disconnect();
+
+                        //Now, start receiving
+//                        Thread.sleep(1000);
+//
+//                        HttpURLConnection conn2=(HttpURLConnection)url.openConnection();
+//                        conn2.setRequestMethod("POST");
+//                        conn2.setDoOutput(true);
+//                        conn2.setDoInput(true);
+//
+//                        //Reading from the Servlet
+//                        DataOutputStream dos2=new DataOutputStream(conn2.getOutputStream());
+//                        clientComm.receiveMessage(dos2);
+//
+//                        InputStream in2=conn2.getInputStream();
+//                        String message="";
+//                        int c2;
+//                        while((c2=in2.read())!=-1){
+//                            System.out.print((char)c2);
+//                            message+=(char)c2;
+//                        }
+//
+//                        if(message!="") {
+//                            themeComms.newMessageReceived(message);
+//                        }
+//
+//                        dos2.flush();
+//                        dos2.close();
+//                        in2.close();
+//
+//                        conn2.disconnect();
+                    }
+                } catch (Exception e) {
+                    System.out.println("Exception in checkThread");
+                    e.printStackTrace();
+                }
+                checking=false;
             }
         }
 

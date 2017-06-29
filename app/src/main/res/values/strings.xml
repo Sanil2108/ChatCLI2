@@ -15,6 +15,9 @@
         <item>\@check</item>
         <item>Checks for new messages</item>
 
+        <item>\@list</item>
+        <item>Shows the list of currently connected users</item>
+
         <item>\@help_advanced</item>
         <item>Provides advanced help</item>
 
@@ -24,10 +27,10 @@
     </string-array>
 
     <string-array name="help_advanced">
-        <item>\@conn [name\r]</item>
-        <item>If \'r\' is entered then the connection is to a random person </item>
+        <item>\@dev [message]</item>
+        <item>Send me a message. I\'m most probably bored anyway</item>
 
         <item>\@ping</item>
-        <item>\@pings the server and displays the time taken for the response</item>
+        <item>pings the server and displays the time taken for the response</item>
     </string-array>
 </resources>

@@ -20,6 +20,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.sanilk.chatcli2.R;
+import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
 import com.sanilk.chatcli2.themes.ThemeActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
@@ -48,6 +49,9 @@ public class DOSThemeActivity extends ThemeActivity {
     TextView messageTextView;
 
 
+    //SQLite code
+    DatabaseHandlerForConnections databaseHandlerForConnections;
+
     //Sender is the current user and receiver is the other guy.
     //I know, confusing
     private final static String SENDER="sanil";
@@ -59,6 +63,8 @@ public class DOSThemeActivity extends ThemeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dostheme);
+
+        databaseHandlerForConnections=new DatabaseHandlerForConnections(this);
 
         getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -89,22 +95,22 @@ public class DOSThemeActivity extends ThemeActivity {
     }
 
     public void handleMessageAgain(Message msg){
-        MessageTypeAndMessage messageTypeAndMessage=(MessageTypeAndMessage)msg.obj;
-        String message=messageTypeAndMessage.message;
-        MESSAGE_TYPE messageType=messageTypeAndMessage.messageType;
+        MessageTypeAndMessage messageTypeAndMessage = (MessageTypeAndMessage) msg.obj;
+        String message = messageTypeAndMessage.message;
+        MESSAGE_TYPE messageType = messageTypeAndMessage.messageType;
 
         senderTextView = new TextView(context);
         messageTextView = new TextView(context);
 
-        if(message!=null && message!="") {
-            LinearLayout linearLayout=new LinearLayout(context);
+        if (message != null && message != "") {
+            LinearLayout linearLayout = new LinearLayout(context);
             linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-            linearLayout.setPadding(0,0,0,0);
+            linearLayout.setPadding(0, 0, 0, 0);
 //                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
             senderTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
             messageTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-            if(Build.VERSION.SDK_INT>23) {
-                switch (messageType){
+            if (Build.VERSION.SDK_INT > 23) {
+                switch (messageType) {
                     case DEFAULT:
                         senderTextView.setText("SYSTEM>");
                         senderTextView.setTextColor(getColor(R.color.DOSText));
@@ -128,8 +134,8 @@ public class DOSThemeActivity extends ThemeActivity {
                         messageTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
                         break;
                 }
-            }else{
-                switch (messageType){
+            } else {
+                switch (messageType) {
                     case DEFAULT:
                         senderTextView.setText("SYSTEM>");
                         senderTextView.setTextColor(getResources().getColor(R.color.DOSText));
@@ -161,6 +167,7 @@ public class DOSThemeActivity extends ThemeActivity {
             linearLayout.addView(messageTextView);
             mainContainer.addView(linearLayout);
         }
+
     }
 
     public void execButton(){
@@ -198,6 +205,9 @@ public class DOSThemeActivity extends ThemeActivity {
                     connected=true;
                     currentReceiver=receiver;
                     displayMessage("\nConnection succesfully established", MESSAGE_TYPE.DEFAULT);
+
+                    databaseHandlerForConnections.newConnection(currentReceiver);
+
                 }catch (ArrayIndexOutOfBoundsException e){
                     displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.ERROR);
                 }
@@ -225,6 +235,17 @@ public class DOSThemeActivity extends ThemeActivity {
                     displayMessage(helpAdvanced[i]+" : "+helpAdvanced[i+1]+"\n", MESSAGE_TYPE.DEFAULT);
                 }
                 break;
+            case "@list":
+                ArrayList<String> allUsers=databaseHandlerForConnections.getAllUsers();
+                String finalString="";
+                for(String string:allUsers){
+                    finalString+=string+"\t";
+                }
+                displayMessage(finalString, MESSAGE_TYPE.DEFAULT);
+                break;
+            case "@check":
+                checkMessages();
+                break;
             case "@logout":
                 break;
             case "@ping":
@@ -249,6 +270,7 @@ public class DOSThemeActivity extends ThemeActivity {
     public void destroyConnection(String sender, String receiver){
         //Un-registering theme comms and let the garbage collector do the work
         themeCommsRegistered=false;
+        themeComms.disconnect();
         themeComms=null;
     }
 
@@ -256,6 +278,35 @@ public class DOSThemeActivity extends ThemeActivity {
     public void displayMessage(String message, ThemeActivity.MESSAGE_TYPE messageType) {
         Log.d("DOSThemeActivity", message);
         receiverThreadRunnable.setMessage(message, messageType);
+    }
+
+    @Override
+    public void checkMessages(){
+        if(themeComms==null) {
+            themeComms=new ThemeComms(SENDER);
+        }
+//        checkingThread.start();
+        displayMessage(themeComms.checkMessages(databaseHandlerForConnections), MESSAGE_TYPE.DEFAULT);
+//        displayMessage(themeComms.newCheckedMessage, MESSAGE_TYPE.DEFAULT);
+        Thread t=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int i=0;
+                while(i<100){
+                    String temp=themeComms.newCheckedMessage;
+                    if(temp!="" && temp!=null){
+                        displayMessage(temp, MESSAGE_TYPE.DEFAULT);
+                        break;
+                    }
+                    try {
+                        Thread.sleep(100);
+                    }catch (Exception e){
+
+                    }
+                }
+            }
+        });
+        t.start();
     }
 
     @Override
@@ -288,16 +339,18 @@ public class DOSThemeActivity extends ThemeActivity {
         @Override
         public void run() {
             while(true) {
-                Message msg=Message.obtain();
-                MessageTypeAndMessage messageTypeAndMessage=new MessageTypeAndMessage(messageType, message);
-                msg.obj=messageTypeAndMessage;
-                uiHandler.sendMessage(msg);
-                message="";
-                receiveMessage();
-                try {
-                    Thread.sleep(500);
-                }catch (Exception e){
+                if(message!="") {
+                    Message msg = Message.obtain();
+                    MessageTypeAndMessage messageTypeAndMessage = new MessageTypeAndMessage(messageType, message);
+                    msg.obj = messageTypeAndMessage;
+                    uiHandler.sendMessage(msg);
+                    message = "";
+                    receiveMessage();
+                    try {
+                        Thread.sleep(500);
+                    } catch (Exception e) {
 
+                    }
                 }
             }
         }

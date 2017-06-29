@@ -37,4 +37,8 @@ public abstract class ThemeActivity extends Activity {
 
     public void receiveMessage(){
     }
+
+    public void checkMessages(){
+
+    }
 }
