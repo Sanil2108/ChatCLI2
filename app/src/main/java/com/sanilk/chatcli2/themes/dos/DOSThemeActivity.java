@@ -194,7 +194,7 @@ public class DOSThemeActivity extends ThemeActivity {
                     if(connected){
                         displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
                         destroyConnection(SENDER, currentReceiver);
-                        displayMessage("\nConnection successfully broken", MESSAGE_TYPE.DEFAULT);
+                        displayMessage("Connection successfully broken", MESSAGE_TYPE.DEFAULT);
                         currentReceiver = "";
                         connected = false;
                     }
@@ -204,7 +204,7 @@ public class DOSThemeActivity extends ThemeActivity {
                     establishConnection(SENDER, receiver);
                     connected=true;
                     currentReceiver=receiver;
-                    displayMessage("\nConnection succesfully established", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("Connection succesfully established", MESSAGE_TYPE.DEFAULT);
 
                     databaseHandlerForConnections.newConnection(currentReceiver);
 
@@ -218,7 +218,7 @@ public class DOSThemeActivity extends ThemeActivity {
                 }else {
                     displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
                     destroyConnection(SENDER, currentReceiver);
-                    displayMessage("\nConnection successfully broken", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("Connection successfully broken", MESSAGE_TYPE.DEFAULT);
                     currentReceiver = "";
                     connected = false;
                 }
@@ -317,7 +317,10 @@ public class DOSThemeActivity extends ThemeActivity {
     @Override
     public void receiveMessage(){
         if(themeCommsRegistered) {
-            displayMessage(themeComms.receiveMessages(), MESSAGE_TYPE.RECEIVED);
+            String message=themeComms.receiveMessages();
+            if(message!="") {
+                displayMessage(message, MESSAGE_TYPE.RECEIVED);
+            }
         }
     }
 
@@ -339,6 +342,7 @@ public class DOSThemeActivity extends ThemeActivity {
         @Override
         public void run() {
             while(true) {
+                receiveMessage();
                 if(message!="") {
                     Message msg = Message.obtain();
                     MessageTypeAndMessage messageTypeAndMessage = new MessageTypeAndMessage(messageType, message);

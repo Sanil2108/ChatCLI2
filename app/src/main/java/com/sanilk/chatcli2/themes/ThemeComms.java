@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public class ThemeComms {
     MainCommunication communication;
 
-    String newMessage="";
+    public String newMessage="";
     public String newCheckedMessage="";
 
     public ThemeComms(String user, String receiver){
@@ -48,7 +48,7 @@ public class ThemeComms {
     }
 
     public void newMessageReceived(String message){
-        newMessage=message;
+        newMessage+=message;
     }
 
     public void disconnect(){
