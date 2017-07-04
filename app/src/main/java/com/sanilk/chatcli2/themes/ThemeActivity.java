@@ -2,12 +2,15 @@ package com.sanilk.chatcli2.themes;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 /**
  * Created by Admin on 18-06-2017.
  */
 
 public abstract class ThemeActivity extends Activity {
+    public LinearLayout selectedLinearLayout;
     ThemeComms themeComms;
 
     public enum MESSAGE_TYPE{

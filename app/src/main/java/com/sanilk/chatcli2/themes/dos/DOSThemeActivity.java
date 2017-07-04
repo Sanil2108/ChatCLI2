@@ -48,7 +48,6 @@ public class DOSThemeActivity extends ThemeActivity {
     TextView senderTextView;
     TextView messageTextView;
 
-
     //SQLite code
     DatabaseHandlerForConnections databaseHandlerForConnections;
 
@@ -58,6 +57,12 @@ public class DOSThemeActivity extends ThemeActivity {
     private String currentReceiver="";
 
     private boolean connected=false;
+
+    //More variables for selection
+    private static final boolean TEXT_COLOR_CHANGE_ON_SELECTION=true;
+    private MESSAGE_TYPE selectedMessageType=null;
+    private TextView selectedSenderTextView=null;
+    private TextView selectedMessageTextView=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,18 +97,21 @@ public class DOSThemeActivity extends ThemeActivity {
         receiverThread=new Thread(receiverThreadRunnable);
         receiverThread.start();
 
+        //From the superclass
+        selectedLinearLayout=null;
+
     }
 
     public void handleMessageAgain(Message msg){
         MessageTypeAndMessage messageTypeAndMessage = (MessageTypeAndMessage) msg.obj;
-        String message = messageTypeAndMessage.message;
-        MESSAGE_TYPE messageType = messageTypeAndMessage.messageType;
+        final String message = messageTypeAndMessage.message;
+        final MESSAGE_TYPE messageType = messageTypeAndMessage.messageType;
 
         senderTextView = new TextView(context);
         messageTextView = new TextView(context);
 
         if (message != null && message != "") {
-            LinearLayout linearLayout = new LinearLayout(context);
+            final LinearLayout linearLayout = new LinearLayout(context);
             linearLayout.setOrientation(LinearLayout.HORIZONTAL);
             linearLayout.setPadding(0, 0, 0, 0);
 //                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
@@ -165,9 +173,77 @@ public class DOSThemeActivity extends ThemeActivity {
             messageTextView.setText(message);
             linearLayout.addView(senderTextView);
             linearLayout.addView(messageTextView);
+
             mainContainer.addView(linearLayout);
+
+            //ERRORs can't be selected
+            if(messageType!=MESSAGE_TYPE.ERROR && messageType!=MESSAGE_TYPE.DEFAULT) {
+                linearLayout.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        newTextViewSelected(linearLayout, (TextView)linearLayout.getChildAt(0), (TextView)linearLayout.getChildAt(1), messageType);
+                    }
+                });
+            }
         }
 
+    }
+
+    private void newTextViewSelected(LinearLayout linearLayout, TextView senderTextView, TextView messageTextView, MESSAGE_TYPE messageType){
+
+        if(selectedLinearLayout!=null) {
+            if (Build.VERSION.SDK_INT > 23) {
+                selectedLinearLayout.setBackgroundColor(getColor(R.color.DOSBackground));
+                switch (selectedMessageType) {
+                    case RECEIVED:
+                        selectedSenderTextView.setTextColor(getColor(R.color.DOSReceiver));
+                        selectedMessageTextView.setTextColor(getColor(R.color.DOSReceiver));
+                        break;
+                    case SENT:
+                        selectedSenderTextView.setTextColor(getColor(R.color.DOSSender));
+                        selectedMessageTextView.setTextColor(getColor(R.color.DOSSender));
+                        break;
+                }
+            } else {
+                selectedLinearLayout.setBackgroundColor(getResources().getColor(R.color.DOSBackground));
+                switch (selectedMessageType) {
+                    case RECEIVED:
+                        selectedSenderTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                        selectedMessageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                        break;
+                    case SENT:
+                        selectedSenderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                        selectedMessageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                        break;
+                }
+            }
+        }
+
+
+        if(!linearLayout.equals(selectedLinearLayout)) {
+            selectedLinearLayout = linearLayout;
+            selectedMessageType=messageType;
+            selectedMessageTextView=messageTextView;
+            selectedSenderTextView=senderTextView;
+            if (Build.VERSION.SDK_INT > 23) {
+                if(TEXT_COLOR_CHANGE_ON_SELECTION){
+                    senderTextView.setTextColor(getColor(R.color.DOSHighlightedText));
+                    messageTextView.setTextColor(getColor(R.color.DOSHighlightedText));
+                }
+                linearLayout.setBackgroundColor(getColor(R.color.DOSHighlightedBackground));
+            } else {
+                if(TEXT_COLOR_CHANGE_ON_SELECTION){
+                    senderTextView.setTextColor(getResources().getColor(R.color.DOSHighlightedText));
+                    messageTextView.setTextColor(getResources().getColor(R.color.DOSHighlightedText));
+                }
+                linearLayout.setBackgroundColor(getResources().getColor(R.color.DOSHighlightedBackground));
+            }
+        }else {
+            selectedLinearLayout=null;
+            selectedMessageTextView=null;
+            selectedSenderTextView=null;
+            selectedMessageType=null;
+        }
     }
 
     public void execButton(){
