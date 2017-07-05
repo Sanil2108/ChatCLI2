@@ -20,6 +20,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.sanilk.chatcli2.R;
+import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
 import com.sanilk.chatcli2.themes.ThemeActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
@@ -53,8 +54,12 @@ public class DOSThemeActivity extends ThemeActivity {
 
     //Sender is the current user and receiver is the other guy.
     //I know, confusing
-    private final static String SENDER="sanil";
+//    private final static String SENDER="sanil";
     private String currentReceiver="";
+
+    //This is the client who is logged in at the time
+    private Client senderClient;
+    private boolean loggedIn=false;
 
     private boolean connected=false;
 
@@ -130,7 +135,7 @@ public class DOSThemeActivity extends ThemeActivity {
                         messageTextView.setTextColor(getColor(R.color.DOSReceiver));
                         break;
                     case SENT:
-                        senderTextView.setText(SENDER + ">");
+                        senderTextView.setText(senderClient.getNick() + ">");
                         senderTextView.setTextColor(getColor(R.color.DOSSender));
                         messageTextView.setTextColor(getColor(R.color.DOSSender));
                         break;
@@ -155,7 +160,7 @@ public class DOSThemeActivity extends ThemeActivity {
                         messageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
                         break;
                     case SENT:
-                        senderTextView.setText(SENDER + ">");
+                        senderTextView.setText(senderClient.getNick() + ">");
                         senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
                         messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
                         break;
@@ -255,8 +260,12 @@ public class DOSThemeActivity extends ThemeActivity {
     public void splitAndProcessCommand(String cmd){
 //        if(cmd.toCharArray()[0] == '@'){
             //It is a command
-            String[] cmds=cmd.split(" ");
-            processCommand(cmds);
+        String[] cmds=cmd.split(" ");
+        if(!cmds[0].equals("@login") && !cmds[0].equals("@signup") && !loggedIn){
+            displayMessage("You are not logged in. Log in using @login or sign up using @signup", MESSAGE_TYPE.ERROR);
+            return;
+        }
+        processCommand(cmds);
 //        }else{
 //            displayMessage("Invalid");
 //        }
@@ -265,11 +274,40 @@ public class DOSThemeActivity extends ThemeActivity {
     public void processCommand(String[] cmd){
         String receiver;
         switch (cmd[0]){
+            case "@login":
+                if(!themeComms.checkIfClientIsAuthentic(cmd[1], cmd[2])){
+                    displayMessage("Login attempt failed", MESSAGE_TYPE.ERROR);
+                }else{
+                    if(cmd.length<3){
+                        displayMessage("Wrong number of arguments", MESSAGE_TYPE.ERROR);
+                    }else {
+                        senderClient = new Client(cmd[1], cmd[2]);
+                        loggedIn = true;
+                        displayMessage("Successfully logged in", MESSAGE_TYPE.DEFAULT);
+                    }
+                }
+                break;
+            case "@logout":
+                if(loggedIn){
+                    if(themeComms!=null) {
+                        themeComms.disconnect();
+                    }
+                    loggedIn=false;
+                    senderClient=null;
+                    displayMessage("Successfully logged out.", MESSAGE_TYPE.DEFAULT);
+                }else{
+                    displayMessage("You are not logged in", MESSAGE_TYPE.ERROR);
+                }
+                break;
+            case "@signup":
+                themeComms.signUpClient(cmd[1], cmd[2]);
+                displayMessage("Successfully signed up. Use @login [username] [password] to log in", MESSAGE_TYPE.DEFAULT);
+                break;
             case "@conn":
                 try {
                     if(connected){
                         displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
-                        destroyConnection(SENDER, currentReceiver);
+                        destroyConnection(senderClient.getNick(), currentReceiver);
                         displayMessage("Connection successfully broken", MESSAGE_TYPE.DEFAULT);
                         currentReceiver = "";
                         connected = false;
@@ -277,7 +315,7 @@ public class DOSThemeActivity extends ThemeActivity {
                     receiver = cmd[1];
                     displayMessage("Establishing connection to "+receiver+" ...", MESSAGE_TYPE.DEFAULT);
                     //maybe add a percentage thing here. would need delete message method which deletes the last message though
-                    establishConnection(SENDER, receiver);
+                    establishConnection(senderClient.getNick(), receiver);
                     connected=true;
                     currentReceiver=receiver;
                     displayMessage("Connection succesfully established", MESSAGE_TYPE.DEFAULT);
@@ -293,7 +331,7 @@ public class DOSThemeActivity extends ThemeActivity {
                     displayMessage("You are not connected to anyone.", MESSAGE_TYPE.ERROR);
                 }else {
                     displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
-                    destroyConnection(SENDER, currentReceiver);
+                    destroyConnection(senderClient.getNick(), currentReceiver);
                     displayMessage("Connection successfully broken", MESSAGE_TYPE.DEFAULT);
                     currentReceiver = "";
                     connected = false;
@@ -321,8 +359,6 @@ public class DOSThemeActivity extends ThemeActivity {
                 break;
             case "@check":
                 checkMessages();
-                break;
-            case "@logout":
                 break;
             case "@ping":
                 break;
@@ -359,7 +395,7 @@ public class DOSThemeActivity extends ThemeActivity {
     @Override
     public void checkMessages(){
         if(themeComms==null) {
-            themeComms=new ThemeComms(SENDER);
+            themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
         }
 //        checkingThread.start();
         displayMessage(themeComms.checkMessages(databaseHandlerForConnections), MESSAGE_TYPE.DEFAULT);
@@ -369,6 +405,9 @@ public class DOSThemeActivity extends ThemeActivity {
             public void run() {
                 int i=0;
                 while(i<100){
+                    if(themeComms==null){
+                        themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
+                    }
                     String temp=themeComms.newCheckedMessage;
                     if(temp!="" && temp!=null){
                         displayMessage(temp, MESSAGE_TYPE.DEFAULT);
@@ -393,6 +432,9 @@ public class DOSThemeActivity extends ThemeActivity {
     @Override
     public void receiveMessage(){
         if(themeCommsRegistered) {
+            if(themeComms==null){
+                themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
+            }
             String message=themeComms.receiveMessages();
             if(message!="") {
                 displayMessage(message, MESSAGE_TYPE.RECEIVED);
@@ -402,7 +444,7 @@ public class DOSThemeActivity extends ThemeActivity {
 
     @Override
     public void registerThemeComms(String user, String receiver) {
-        themeComms=new ThemeComms(user, receiver);
+        themeComms=new ThemeComms(user, senderClient.getPass(), receiver);
         themeCommsRegistered=true;
     }
 

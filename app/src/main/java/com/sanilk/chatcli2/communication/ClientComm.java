@@ -21,6 +21,17 @@ public class ClientComm {
 
     }
 
+    public static void checkIfClientIsAuthentic(DataOutputStream dos, Client sender){
+        try{
+            dos.writeUTF(sender.nick+":AUTHENTICATE:::"+sender.getPass());
+            dos.flush();
+            dos.close();
+        }catch (Exception e){
+            System.out.println("Error in clientcomm");
+            e.printStackTrace();
+        }
+    }
+
     public void registerClientComm(Client sender){
         this.sender=sender;
     }
@@ -33,10 +44,21 @@ public class ClientComm {
     public void sendMessage(String message, DataOutputStream dos){
         try {
             message += "\n";
-            dos.writeUTF(sender.nick + ":SEND:" + receiver.nick + ":" + message);
+            dos.writeUTF(sender.nick + ":SEND:" + receiver.nick + ":" + message + ":" + sender.getPass());
             dos.flush();
             dos.close();
         }catch (IOException e){
+            System.out.println("Exception in ClientComm : ");
+            e.printStackTrace();
+        }
+    }
+
+    public static void signUp(DataOutputStream dos, String nick, String pass){
+        try{
+            dos.writeUTF(nick+":SIGN_UP:::"+pass);
+            dos.flush();
+            dos.close();
+        }catch (Exception e){
             System.out.println("Exception in ClientComm : ");
             e.printStackTrace();
         }
@@ -49,7 +71,7 @@ public class ClientComm {
                 allSenders+=senders[i]+";";
             }
 //            dos.writeUTF(sender.nick + ":SEND:" + "sanil2" + ":" + "abc");
-            dos.writeUTF(sender.nick+":CHECK::"+allSenders);
+            dos.writeUTF(sender.nick+":CHECK::"+allSenders+":"+sender.getPass());
             dos.flush();
             dos.close();
         }catch (Exception e){
@@ -61,7 +83,7 @@ public class ClientComm {
 
     public void receiveMessage(DataOutputStream dos){
         try{
-            dos.writeUTF(sender+":RECEIVE:"+receiver);
+            dos.writeUTF(sender+":RECEIVE:"+receiver+"::"+sender.getPass());
             dos.flush();
             dos.close();
         }catch (IOException e){

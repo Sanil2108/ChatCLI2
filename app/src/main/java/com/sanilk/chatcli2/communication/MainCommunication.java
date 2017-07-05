@@ -17,22 +17,24 @@ import java.net.URL;
 public class MainCommunication {
 
     private static final String ADDRESS="http://10.0.2.2:9999/Test1/Servlet1";
-    private static final String DEFAULT_PASSWORD="raymon11";
+    private static final String DEFAULT_PASSWORD="root";
 
     Client receiver;
     Client sender;
 
+    static Thread signUpThread;
     Thread inputThread;
     Thread outputThread;
     Thread checkThread;
 
     ClientComm clientComm;
 
-    URL url;
+    static URL url;
 
     CheckHandler checkHandler;
     SenderHandler senderHandler;
     ReceiverHandler receiverHandler;
+    static SignUpHandler signUpHandler;
 
     ThemeComms themeComms;
 
@@ -41,8 +43,9 @@ public class MainCommunication {
 
     private boolean stopReceiving=false;
 
-    public MainCommunication(String sender, ThemeComms themeComms){
-        this.sender=new Client(sender, DEFAULT_PASSWORD);
+    //This constructor is used only for checking messages
+    public MainCommunication(String sender, String password, ThemeComms themeComms){
+        this.sender=new Client(sender, password);
         this.themeComms=themeComms;
         try {
             url = new URL(ADDRESS);
@@ -64,11 +67,11 @@ public class MainCommunication {
         }
     }
 
-    public MainCommunication(String sender, String receiver, ThemeComms themeComms){
+    public MainCommunication(String sender, String password, String receiver, ThemeComms themeComms){
         this.themeComms=themeComms;
 
-        this.receiver=new Client(receiver, DEFAULT_PASSWORD);
-        this.sender=new Client(sender, DEFAULT_PASSWORD);
+        this.receiver=new Client(receiver, password);
+        this.sender=new Client(sender, password);
 
         try {
             url = new URL(ADDRESS);
@@ -83,11 +86,88 @@ public class MainCommunication {
 
             outputThread=new Thread(receiverHandler);
 
+            checkHandler=new CheckHandler();
+            checkThread=new Thread(checkHandler);
+            checkThread.start();
+
+
         }catch (Exception e){
             System.out.println("Exception in MainCommunication");
             e.printStackTrace();
         }
     }
+
+    public static void signUpClient(String nick, String pass){
+        signUpHandler=new SignUpHandler(nick, pass);
+
+        signUpThread=new Thread(signUpHandler);
+        signUpThread.start();
+    }
+
+    static boolean authentic;
+    static boolean authenticatingThreadFinished=false;
+    public static boolean isClientAuthentic(final String sender, final String pass){
+
+        Thread t=new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if(isClientAuthenticFromInnerClass(sender, pass)){
+                    authentic=true;
+                }else{
+                    authentic=false;
+                }
+            }
+        });
+        authenticatingThreadFinished=false;
+        t.start();
+        while(!authenticatingThreadFinished) {
+            try {
+                Thread.sleep(10);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return authentic;
+    }
+
+    private static boolean isClientAuthenticFromInnerClass(String sender, String pass){
+        String finalMessage="";
+        try {
+            if(url==null){
+                url=new URL(ADDRESS);
+            }
+            HttpURLConnection conn5 = (HttpURLConnection) url.openConnection();
+            conn5.setRequestMethod("POST");
+            conn5.setDoInput(true);
+            conn5.setDoOutput(true);
+
+            DataOutputStream dos=new DataOutputStream(conn5.getOutputStream());
+            ClientComm.checkIfClientIsAuthentic(dos, new Client(sender, pass));
+            dos.flush();
+            dos.close();
+
+            InputStream in=conn5.getInputStream();
+            int c;
+            while((c = in.read()) != -1){
+                System.out.print((char)c);
+                finalMessage+=(char)c;
+            }
+            in.close();
+
+            conn5.disconnect();
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        authenticatingThreadFinished=true;
+
+        if(finalMessage.toCharArray()[finalMessage.toCharArray().length-1] == 'T'){
+            return true;
+        }
+        return false;
+    }
+
 
     public void startReceiving(){
         if(!receiving) {
@@ -109,6 +189,49 @@ public class MainCommunication {
 
     public void checkMessages(String[] allSenders){
         checkHandler.startChecking(allSenders);
+    }
+
+    private static class SignUpHandler implements Runnable{
+        String nick=null;
+        String pass=null;
+
+        public SignUpHandler(String nick, String pass){
+            this.nick=nick;
+            this.pass=pass;
+        }
+
+        @Override
+        public void run(){
+            try{
+                if(url==null){
+                    url=new URL(ADDRESS);
+                }
+                HttpURLConnection conn4=(HttpURLConnection)url.openConnection();
+                conn4.setRequestMethod("POST");
+                conn4.setDoInput(true);
+                conn4.setDoOutput(true);
+
+                DataOutputStream dos=new DataOutputStream(conn4.getOutputStream());
+
+                ClientComm.signUp(dos, nick, pass);
+
+                InputStream in=conn4.getInputStream();
+                int c;
+                while((c=in.read()) != -1){
+                    System.out.print((char)c);
+                }
+                in.close();
+
+                dos.flush();
+                dos.close();
+
+                conn4.disconnect();
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
     }
 
     private class ReceiverHandler implements Runnable{

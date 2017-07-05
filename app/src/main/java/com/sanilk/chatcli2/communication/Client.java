@@ -6,11 +6,19 @@ package com.sanilk.chatcli2.communication;
 
 public class Client {
     String nick;
-    String pass;
+    private String pass;
 
-    Client(String nick, String pass){
+    public String getNick() {
+        return nick;
+    }
+
+    public Client(String nick, String pass){
         this.nick=nick;
         this.pass=pass;
+    }
+
+    public String getPass() {
+        return pass;
     }
 
     @Override

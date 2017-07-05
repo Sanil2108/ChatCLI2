@@ -1,6 +1,7 @@
 package com.sanilk.chatcli2.themes;
 
 import com.sanilk.chatcli2.MainActivity;
+import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.communication.MainCommunication;
 import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
 
@@ -16,19 +17,23 @@ public class ThemeComms {
     public String newMessage="";
     public String newCheckedMessage="";
 
-    public ThemeComms(String user, String receiver){
-        communication=new MainCommunication(user, receiver, this);
+    public ThemeComms(String user, String password, String receiver){
+        communication=new MainCommunication(user, password, receiver, this);
         communication.startReceiving();
     }
 
-    public ThemeComms(String user){
-        communication=new MainCommunication(user, this);
+    public ThemeComms(String user, String password){
+        communication=new MainCommunication(user, password, this);
     }
 
     public String receiveMessages(){
         String temp=newMessage;
         newMessage="";
         return temp;
+    }
+
+    public static void signUpClient(String nick, String pass){
+        MainCommunication.signUpClient(nick, pass);
     }
 
     public String checkMessages(DatabaseHandlerForConnections databaseHandlerForConnections){
@@ -41,6 +46,10 @@ public class ThemeComms {
         String temp=newMessage;
         newMessage="";
         return temp;
+    }
+
+    public static boolean checkIfClientIsAuthentic(String sender, String pass){
+        return MainCommunication.isClientAuthentic(sender, pass);
     }
 
     public void newMessagesChecked(String newCheckedMessage){
