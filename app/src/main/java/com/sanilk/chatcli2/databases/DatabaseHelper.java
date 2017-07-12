@@ -11,15 +11,15 @@ import android.util.Log;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String DB_NAME="MAIN";
-    private static final int DB_VERSION=3;
+    private static final int DB_VERSION=5;
 
     //Connections table
     protected static final String CONNECTIONS_TABLE_NAME="CONNECTIONS_TABLE";
     private static final String[] CONNECTIONS_TABLE_COLUMNS={
-            "name text"
+            "username text, sendername text"
     };
     protected static final String[] CONNECTIONS_TABLE_COLUMNS_NAMES={
-            "name"
+            "username","sendername"
     };
 
 

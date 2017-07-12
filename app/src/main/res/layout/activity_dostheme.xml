@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout android:layout_width="match_parent"
+
+<ScrollView android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/DOSBackground"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout android:layout_width="match_parent"
     android:orientation="vertical"
     android:layout_height="match_parent"
     android:background="@color/DOSBackground"
@@ -15,9 +21,6 @@
         android:orientation="vertical"
         tools:context="com.sanilk.chatcli2.themes.dos.DOSThemeActivity">
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
 
             <LinearLayout
                 style="@style/AppTheme"
@@ -35,8 +38,6 @@
                     android:layout_height="wrap_content" />
 
             </LinearLayout>
-
-        </ScrollView>
 
         <!--<EditText-->
             <!--android:id="@+id/dos_user"-->
@@ -77,19 +78,20 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:orientation="horizontal"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
         <EditText
-            android:layout_weight="99"
-            android:textSize="@dimen/dos_font_size"
             android:id="@+id/dos_cli"
-            android:textColor="@color/DOSText"
-            android:text="\@conn sanil2"
-            android:fontFamily="monospace"
-            android:textStyle="normal"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:layout_weight="99"
+            android:fontFamily="monospace"
+            android:inputType="textEmailAddress"
+            android:text="\@conn sanil2"
+            android:textColor="@color/DOSText"
+            android:textSize="@dimen/dos_font_size"
+            android:textStyle="normal" />
 
         <Button
             android:id="@+id/temp_exec_button"
@@ -101,3 +103,6 @@
     </LinearLayout>
 
 </LinearLayout>
+
+
+    </ScrollView>

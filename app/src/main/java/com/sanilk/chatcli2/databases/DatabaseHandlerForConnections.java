@@ -20,38 +20,62 @@ public class DatabaseHandlerForConnections {
         databaseHelper=new DatabaseHelper(context);
     }
 
-    public void newConnection(String nick){
-        ArrayList<String> currentUsers=getAllUsers();
-        for(String string:currentUsers){
-            if(nick.equals(string)){
+    public void newConnection(String currentUser, String otherUser){
+        ArrayList<ContentValues> currentUsers=getAllConnections();
+        for(ContentValues contentValues:currentUsers){
+            if(contentValues.get("user").equals(currentUser) && contentValues.get("sender").equals(otherUser)){
                 return;
             }
         }
-        enterUser(nick);
+        enterUser(currentUser, otherUser);
     }
 
-    private void enterUser(String nick){
+    private void enterUser(String currentUser, String senderNick){
         ContentValues contentValues=new ContentValues();
-        contentValues.put(allColumns[0], nick);
+        contentValues.put(allColumns[0], currentUser);
+        contentValues.put(allColumns[1], senderNick);
 
         SQLiteDatabase database=databaseHelper.getWritableDatabase();
         database.insert(DatabaseHelper.CONNECTIONS_TABLE_NAME, null, contentValues);
+
+        System.out.println("New connection entered - "+senderNick+" for user "+currentUser);
+
         database.close();
     }
 
-    public ArrayList<String> getAllUsers(){
-        ArrayList<String> allUsers=new ArrayList<>();
+//    public ArrayList<String> getAllUsers(){
+//        ArrayList<String> allUsers=new ArrayList<>();
+//
+//        SQLiteDatabase database=databaseHelper.getReadableDatabase();
+//        Cursor cursor=database.query(DatabaseHelper.CONNECTIONS_TABLE_NAME, allColumns, null, null, null, null, null);
+//
+//        cursor.moveToFirst();
+//        while(!cursor.isAfterLast()){
+//            allUsers.add(cursor.getString(0));
+//            cursor.moveToNext();
+//        }
+//
+//        return allUsers;
+//    }
+
+    public ArrayList<ContentValues> getAllConnections(){
+        ArrayList<ContentValues> allConnections=new ArrayList<>();
 
         SQLiteDatabase database=databaseHelper.getReadableDatabase();
         Cursor cursor=database.query(DatabaseHelper.CONNECTIONS_TABLE_NAME, allColumns, null, null, null, null, null);
 
         cursor.moveToFirst();
         while(!cursor.isAfterLast()){
-            allUsers.add(cursor.getString(0));
+            ContentValues contentValues=new ContentValues(2);
+            contentValues.put("user", cursor.getString(0));
+            contentValues.put("sender", cursor.getString(1));
+            allConnections.add(contentValues);
             cursor.moveToNext();
         }
 
-        return allUsers;
+        database.close();
+
+        return allConnections;
     }
 
 }

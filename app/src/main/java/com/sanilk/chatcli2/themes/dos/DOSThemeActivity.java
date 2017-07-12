@@ -1,5 +1,6 @@
 package com.sanilk.chatcli2.themes.dos;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -76,8 +77,8 @@ public class DOSThemeActivity extends ThemeActivity {
 
         databaseHandlerForConnections=new DatabaseHandlerForConnections(this);
 
-        getWindow().setSoftInputMode(
-                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+//        getWindow().setSoftInputMode(
+//                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         context=this;
 
         mainContainer=(LinearLayout) findViewById(R.id.main_container);
@@ -320,7 +321,7 @@ public class DOSThemeActivity extends ThemeActivity {
                     currentReceiver=receiver;
                     displayMessage("Connection succesfully established", MESSAGE_TYPE.DEFAULT);
 
-                    databaseHandlerForConnections.newConnection(currentReceiver);
+                    databaseHandlerForConnections.newConnection(senderClient.getNick(), currentReceiver);
 
                 }catch (ArrayIndexOutOfBoundsException e){
                     displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.ERROR);
@@ -350,10 +351,12 @@ public class DOSThemeActivity extends ThemeActivity {
                 }
                 break;
             case "@list":
-                ArrayList<String> allUsers=databaseHandlerForConnections.getAllUsers();
+                ArrayList<ContentValues> allUsers=databaseHandlerForConnections.getAllConnections();
                 String finalString="";
-                for(String string:allUsers){
-                    finalString+=string+"\t";
+                for(ContentValues contentValues:allUsers){
+                    if(contentValues.get("user").equals(senderClient.getNick())){
+                        finalString+=contentValues.get("sender")+"\t";
+                    }
                 }
                 displayMessage(finalString, MESSAGE_TYPE.DEFAULT);
                 break;
@@ -398,7 +401,7 @@ public class DOSThemeActivity extends ThemeActivity {
             themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
         }
 //        checkingThread.start();
-        displayMessage(themeComms.checkMessages(databaseHandlerForConnections), MESSAGE_TYPE.DEFAULT);
+        displayMessage(themeComms.checkMessages(senderClient.getNick(), databaseHandlerForConnections), MESSAGE_TYPE.DEFAULT);
 //        displayMessage(themeComms.newCheckedMessage, MESSAGE_TYPE.DEFAULT);
         Thread t=new Thread(new Runnable() {
             @Override
@@ -462,6 +465,11 @@ public class DOSThemeActivity extends ThemeActivity {
             while(true) {
                 receiveMessage();
                 if(message!="") {
+                    try {
+                        Thread.sleep(100);
+                    }catch (Exception e){
+
+                    }
                     Message msg = Message.obtain();
                     MessageTypeAndMessage messageTypeAndMessage = new MessageTypeAndMessage(messageType, message);
                     msg.obj = messageTypeAndMessage;

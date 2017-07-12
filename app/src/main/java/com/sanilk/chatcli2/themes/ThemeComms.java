@@ -1,5 +1,7 @@
 package com.sanilk.chatcli2.themes;
 
+import android.content.ContentValues;
+
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.communication.MainCommunication;
@@ -36,8 +38,14 @@ public class ThemeComms {
         MainCommunication.signUpClient(nick, pass);
     }
 
-    public String checkMessages(DatabaseHandlerForConnections databaseHandlerForConnections){
-        ArrayList<String> allSendersList=databaseHandlerForConnections.getAllUsers();
+    public String checkMessages(String user, DatabaseHandlerForConnections databaseHandlerForConnections){
+        ArrayList<ContentValues> allInfo=databaseHandlerForConnections.getAllConnections();
+        ArrayList<String> allSendersList=new ArrayList<>();
+        for(ContentValues contentValues:allInfo){
+            if(contentValues.get("user").equals(user)){
+                allSendersList.add((String)contentValues.get("sender"));
+            }
+        }
         String[] allSenders=new String[allSendersList.size()];
         for(int i=0;i<allSenders.length;i++){
             allSenders[i]=allSendersList.get(i);
