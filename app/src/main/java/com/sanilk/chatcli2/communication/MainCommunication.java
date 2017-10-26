@@ -443,7 +443,7 @@ public class MainCommunication {
         public void run(){
             while(true) {
                 try {
-                    if(message!="") {
+                    if(message!="" && message!=null) {
 
                         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                         conn.setRequestMethod("POST");

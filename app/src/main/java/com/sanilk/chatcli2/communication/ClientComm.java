@@ -23,7 +23,7 @@ public class ClientComm {
 
     public static void checkIfClientIsAuthentic(DataOutputStream dos, Client sender){
         try{
-            dos.writeUTF(sender.nick+":AUTHENTICATE:::"+sender.getPass());
+            dos.writeUTF(sender.nick+":AUTHENTICATE::"+sender.getPass()+":");
             dos.flush();
             dos.close();
         }catch (Exception e){
@@ -42,20 +42,22 @@ public class ClientComm {
     }
 
     public void sendMessage(String message, DataOutputStream dos){
-        try {
-            message += "\n";
-            dos.writeUTF(sender.nick + ":SEND:" + receiver.nick + ":" + message + ":" + sender.getPass());
-            dos.flush();
-            dos.close();
-        }catch (IOException e){
-            System.out.println("Exception in ClientComm : ");
-            e.printStackTrace();
+        if(message!=null) {
+            try {
+                message += "\n";
+                dos.writeUTF(sender.nick + ":SEND:" + receiver.nick + ":" + sender.getPass() + ":" + message);
+                dos.flush();
+                dos.close();
+            } catch (IOException e) {
+                System.out.println("Exception in ClientComm : ");
+                e.printStackTrace();
+            }
         }
     }
 
     public void sendLogs(String logs, DataOutputStream dos){
         try{
-            dos.writeUTF(":SEND_LOG::"+logs+":");
+            dos.writeUTF(sender.nick+":SEND_LOG:::"+logs);
             dos.flush();
             dos.close();
         }catch (IOException e){
@@ -65,7 +67,7 @@ public class ClientComm {
 
     public static void signUp(DataOutputStream dos, String nick, String pass){
         try{
-            dos.writeUTF(nick+":SIGN_UP:::"+pass);
+            dos.writeUTF(nick+":SIGN_UP::"+pass+":");
             dos.flush();
             dos.close();
         }catch (Exception e){
@@ -81,7 +83,7 @@ public class ClientComm {
                 allSenders+=senders[i]+";";
             }
 //            dos.writeUTF(sender.nick + ":SEND:" + "sanil2" + ":" + "abc");
-            dos.writeUTF(sender.nick+":CHECK::"+allSenders+":"+sender.getPass());
+            dos.writeUTF(sender.nick+":CHECK::"+sender.getPass()+":"+allSenders);
             dos.flush();
             dos.close();
         }catch (Exception e){
@@ -93,7 +95,7 @@ public class ClientComm {
 
     public void receiveMessage(DataOutputStream dos){
         try{
-            dos.writeUTF(sender+":RECEIVE:"+receiver+"::"+sender.getPass());
+            dos.writeUTF(sender+":RECEIVE:"+receiver+":"+sender.getPass()+":");
             dos.flush();
             dos.close();
         }catch (IOException e){

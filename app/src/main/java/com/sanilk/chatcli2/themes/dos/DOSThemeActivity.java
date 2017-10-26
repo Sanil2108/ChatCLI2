@@ -65,6 +65,8 @@ public class DOSThemeActivity extends Activity {
     //SQLite code
     DatabaseHandlerForConnections databaseHandlerForConnections;
 
+    private static final boolean LOGGING=false;
+
     //Sender is the current user and receiver is the other guy.
     //I know, confusing
 //    private final static String SENDER="sanil";
@@ -302,13 +304,17 @@ public class DOSThemeActivity extends Activity {
     public void execButton(){
         String completeCommand = cli.getText().toString();
         cli.setText("");
-        Date currentDateAndTime=new Date();
-        String logString="\n"+currentDateAndTime+"\t"+completeCommand+"\t"+senderClient.getNick()+"\t"+senderClient.getPass()+"\t"+
-                loggedIn+"\t"+themeCommsRegistered+"\t"+currentReceiver+"\t"+connected;
-        SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_APPEND);
-        SharedPreferences.Editor editor=sharedPreferences.edit();
-        editor.putString(LOG_FILE_KEY, logString);
-        editor.commit();
+        if(LOGGING) {
+            Date currentDateAndTime = new Date();
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_PRIVATE);
+            String logString = sharedPreferences.getString(LOG_FILE_KEY, "") + "\n" + currentDateAndTime + "\t" + completeCommand + "\t" +
+                    ((senderClient == null) ? "null" : senderClient.getNick()) + "\t" +
+                    ((senderClient == null) ? "null" : senderClient.getPass()) + "\t" +
+                    loggedIn + "\t" + themeCommsRegistered + "\t" + currentReceiver + "\t" + connected;
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(LOG_FILE_KEY, logString);
+            editor.commit();
+        }
         splitAndProcessCommand(completeCommand);
     }
 
@@ -344,9 +350,15 @@ public class DOSThemeActivity extends Activity {
                 }
                 break;
             case "@sendlog":
+                if(!LOGGING){
+                    displayMessage("Logging function is right now disabled.", MESSAGE_TYPE.ERROR);
+                }
                 SharedPreferences logSharedPreferences=getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_PRIVATE);
                 String logs=logSharedPreferences.getString(LOG_FILE_KEY, "");
-                if(themeComms==null){
+                SharedPreferences.Editor editor=logSharedPreferences.edit();
+                editor.putString(LOG_FILE_KEY, "");
+                editor.commit();
+                if(!loggedIn){
                     displayMessage("You must be logged in.", MESSAGE_TYPE.ERROR);
                 }else {
                     themeComms.sendLogs(logs);
@@ -456,24 +468,32 @@ public class DOSThemeActivity extends Activity {
 
     public void displayMessage(String message, MESSAGE_TYPE messageType) {
         Log.d("DOSThemeActivity", message);
-        Date currentDateAndTime=new Date();
-        String messageTypeForLogFile="N/A";
-        switch (messageType){
-            case DEFAULT:messageTypeForLogFile="SYSTEM";
-                break;
-            case ERROR:messageTypeForLogFile="ERROR";
-                break;
-            case RECEIVED:messageTypeForLogFile="RECEIVED";
-                break;
-            case SENT:messageTypeForLogFile="SENT";
-                break;
+        if(LOGGING) {
+            Date currentDateAndTime = new Date();
+            String messageTypeForLogFile = "N/A";
+            switch (messageType) {
+                case DEFAULT:
+                    messageTypeForLogFile = "SYSTEM";
+                    break;
+                case ERROR:
+                    messageTypeForLogFile = "ERROR";
+                    break;
+                case RECEIVED:
+                    messageTypeForLogFile = "RECEIVED";
+                    break;
+                case SENT:
+                    messageTypeForLogFile = "SENT";
+                    break;
+            }
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_PRIVATE);
+            String logString = sharedPreferences.getString(LOG_FILE_KEY, "") + "\n" + currentDateAndTime + "\tFrom display message " + messageTypeForLogFile + ":" + message + "\t" +
+                    ((senderClient == null) ? "null" : senderClient.getNick()) + "\t" +
+                    ((senderClient == null) ? "null" : senderClient.getPass()) + "\t" +
+                    loggedIn + "\t" + themeCommsRegistered + "\t" + currentReceiver + "\t" + connected;
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(LOG_FILE_KEY, logString);
+            editor.commit();
         }
-        String logString="\n"+currentDateAndTime+"\tFrom display message "+messageTypeForLogFile+":"+message+"\t"+senderClient.getNick()+"\t"+senderClient.getPass()+"\t"+
-                loggedIn+"\t"+themeCommsRegistered+"\t"+currentReceiver+"\t"+connected;
-        SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_APPEND);
-        SharedPreferences.Editor editor=sharedPreferences.edit();
-        editor.putString(LOG_FILE_KEY, logString);
-        editor.commit();
         receiverThreadRunnable.setMessage(message, messageType);
     }
 
