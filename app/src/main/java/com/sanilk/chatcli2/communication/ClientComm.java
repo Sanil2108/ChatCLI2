@@ -53,6 +53,16 @@ public class ClientComm {
         }
     }
 
+    public void sendLogs(String logs, DataOutputStream dos){
+        try{
+            dos.writeUTF(":SEND_LOG::"+logs+":");
+            dos.flush();
+            dos.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+    }
+
     public static void signUp(DataOutputStream dos, String nick, String pass){
         try{
             dos.writeUTF(nick+":SIGN_UP:::"+pass);

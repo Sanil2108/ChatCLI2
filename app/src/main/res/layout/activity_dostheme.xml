@@ -88,7 +88,7 @@
             android:layout_weight="99"
             android:fontFamily="monospace"
             android:inputType="textEmailAddress"
-            android:text="\@conn sanil2"
+            android:text="\@signup"
             android:textColor="@color/DOSText"
             android:textSize="@dimen/dos_font_size"
             android:textStyle="normal" />

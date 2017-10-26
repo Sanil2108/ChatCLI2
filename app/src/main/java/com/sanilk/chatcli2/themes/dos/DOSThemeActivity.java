@@ -2,6 +2,7 @@ package com.sanilk.chatcli2.themes.dos;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -23,13 +24,22 @@ import android.widget.TextView;
 import com.sanilk.chatcli2.R;
 import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
-import com.sanilk.chatcli2.themes.ThemeActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
+import java.io.DataInputStream;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 
-public class DOSThemeActivity extends ThemeActivity {
+
+public class DOSThemeActivity extends Activity {
+
+    public enum MESSAGE_TYPE{
+        SENT, RECEIVED, DEFAULT, ERROR
+    }
+
+    public LinearLayout selectedLinearLayout;
 
     boolean themeCommsRegistered=false;
 
@@ -50,6 +60,8 @@ public class DOSThemeActivity extends ThemeActivity {
     TextView senderTextView;
     TextView messageTextView;
 
+    DOSThemeActivity dosThemeActivity=this;
+
     //SQLite code
     DatabaseHandlerForConnections databaseHandlerForConnections;
 
@@ -69,6 +81,13 @@ public class DOSThemeActivity extends ThemeActivity {
     private MESSAGE_TYPE selectedMessageType=null;
     private TextView selectedSenderTextView=null;
     private TextView selectedMessageTextView=null;
+
+    private static final String LOGIN_FILE_NAME="LOGIN_INFO";
+    private static final String LOGIN_FILE_USER_KEY="USER_NAME";
+    private static final String LOGIN_FILE_PASS_KEY="USER_PASSWORD";
+
+    private static final String LOG_FILE_NAME="LOG_FILE";
+    private static final String LOG_FILE_KEY="LOG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,9 +122,37 @@ public class DOSThemeActivity extends ThemeActivity {
         receiverThread=new Thread(receiverThreadRunnable);
         receiverThread.start();
 
-        //From the superclass
         selectedLinearLayout=null;
 
+        Client oldClient = getLastLogin();
+        if(oldClient!=null){
+            senderClient=oldClient;
+            loggedIn=true;
+            themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
+            displayMessage("You are logged in as "+senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
+        }
+
+    }
+
+    private void storeLastLogin(){
+        String userName = senderClient.getNick();
+        String password = senderClient.getPass();
+        SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOGIN_FILE_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
+        editor.clear();
+        editor.putString(LOGIN_FILE_USER_KEY, userName);
+        editor.putString(LOGIN_FILE_PASS_KEY, password);
+        editor.commit();
+    }
+
+    private Client getLastLogin(){
+        SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOGIN_FILE_NAME, MODE_PRIVATE);
+        String user=sharedPreferences.getString(LOGIN_FILE_USER_KEY, "");String pass=sharedPreferences.getString(LOGIN_FILE_PASS_KEY, "");
+        Client client=new Client(user, pass);
+        if(user=="" || pass==""){
+            return null;
+        }
+        return client;
     }
 
     public void handleMessageAgain(Message msg){
@@ -255,6 +302,13 @@ public class DOSThemeActivity extends ThemeActivity {
     public void execButton(){
         String completeCommand = cli.getText().toString();
         cli.setText("");
+        Date currentDateAndTime=new Date();
+        String logString="\n"+currentDateAndTime+"\t"+completeCommand+"\t"+senderClient.getNick()+"\t"+senderClient.getPass()+"\t"+
+                loggedIn+"\t"+themeCommsRegistered+"\t"+currentReceiver+"\t"+connected;
+        SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_APPEND);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
+        editor.putString(LOG_FILE_KEY, logString);
+        editor.commit();
         splitAndProcessCommand(completeCommand);
     }
 
@@ -284,8 +338,19 @@ public class DOSThemeActivity extends ThemeActivity {
                     }else {
                         senderClient = new Client(cmd[1], cmd[2]);
                         loggedIn = true;
-                        displayMessage("Successfully logged in", MESSAGE_TYPE.DEFAULT);
+                        displayMessage("Successfully logged in as "+senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
+                        storeLastLogin();
                     }
+                }
+                break;
+            case "@sendlog":
+                SharedPreferences logSharedPreferences=getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_PRIVATE);
+                String logs=logSharedPreferences.getString(LOG_FILE_KEY, "");
+                if(themeComms==null){
+                    displayMessage("You must be logged in.", MESSAGE_TYPE.ERROR);
+                }else {
+                    themeComms.sendLogs(logs);
+                    displayMessage("Thanks! For submitting logs. This helps us improve the application and your overall experience", MESSAGE_TYPE.DEFAULT);
                 }
                 break;
             case "@logout":
@@ -301,8 +366,8 @@ public class DOSThemeActivity extends ThemeActivity {
                 }
                 break;
             case "@signup":
-                themeComms.signUpClient(cmd[1], cmd[2]);
-                displayMessage("Successfully signed up. Use @login [username] [password] to log in", MESSAGE_TYPE.DEFAULT);
+                themeComms.signUpClient(cmd[1], cmd[2], this);
+                displayMessage("Use @login [username] [password] to log in", MESSAGE_TYPE.DEFAULT);
                 break;
             case "@conn":
                 try {
@@ -389,16 +454,32 @@ public class DOSThemeActivity extends ThemeActivity {
         themeComms=null;
     }
 
-    @Override
-    public void displayMessage(String message, ThemeActivity.MESSAGE_TYPE messageType) {
+    public void displayMessage(String message, MESSAGE_TYPE messageType) {
         Log.d("DOSThemeActivity", message);
+        Date currentDateAndTime=new Date();
+        String messageTypeForLogFile="N/A";
+        switch (messageType){
+            case DEFAULT:messageTypeForLogFile="SYSTEM";
+                break;
+            case ERROR:messageTypeForLogFile="ERROR";
+                break;
+            case RECEIVED:messageTypeForLogFile="RECEIVED";
+                break;
+            case SENT:messageTypeForLogFile="SENT";
+                break;
+        }
+        String logString="\n"+currentDateAndTime+"\tFrom display message "+messageTypeForLogFile+":"+message+"\t"+senderClient.getNick()+"\t"+senderClient.getPass()+"\t"+
+                loggedIn+"\t"+themeCommsRegistered+"\t"+currentReceiver+"\t"+connected;
+        SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_APPEND);
+        SharedPreferences.Editor editor=sharedPreferences.edit();
+        editor.putString(LOG_FILE_KEY, logString);
+        editor.commit();
         receiverThreadRunnable.setMessage(message, messageType);
     }
 
-    @Override
     public void checkMessages(){
         if(themeComms==null) {
-            themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
+            themeComms = new ThemeComms(senderClient.getNick(), senderClient.getPass(), this);
         }
 //        checkingThread.start();
         displayMessage(themeComms.checkMessages(senderClient.getNick(), databaseHandlerForConnections), MESSAGE_TYPE.DEFAULT);
@@ -409,7 +490,7 @@ public class DOSThemeActivity extends ThemeActivity {
                 int i=0;
                 while(i<100){
                     if(themeComms==null){
-                        themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
+                        themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
                     }
                     String temp=themeComms.newCheckedMessage;
                     if(temp!="" && temp!=null){
@@ -427,35 +508,34 @@ public class DOSThemeActivity extends ThemeActivity {
         t.start();
     }
 
-    @Override
     public void sendMessage(String message) {
         themeComms.sendMessage(message);
     }
 
-    @Override
     public void receiveMessage(){
         if(themeCommsRegistered) {
             if(themeComms==null){
-                themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass());
+                themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
             }
             String message=themeComms.receiveMessages();
-            if(message!="") {
+            if(message!="" && message!=null) {
                 displayMessage(message, MESSAGE_TYPE.RECEIVED);
             }
         }
     }
 
-    @Override
     public void registerThemeComms(String user, String receiver) {
-        themeComms=new ThemeComms(user, senderClient.getPass(), receiver);
+        themeComms=new ThemeComms(user, senderClient.getPass(), receiver, dosThemeActivity);
         themeCommsRegistered=true;
     }
 
     private class ReceiverThreadRunnable implements Runnable{
-        String message="";
-        ThemeActivity.MESSAGE_TYPE messageType;
+        final static String TAG="ReceiverThreadRunnable";
 
-        public void setMessage(String string, ThemeActivity.MESSAGE_TYPE messageType){
+        String message="";
+        MESSAGE_TYPE messageType;
+
+        public void setMessage(String string, MESSAGE_TYPE messageType){
             message+=string;
             this.messageType=messageType;
         }
@@ -468,7 +548,7 @@ public class DOSThemeActivity extends ThemeActivity {
                     try {
                         Thread.sleep(100);
                     }catch (Exception e){
-
+                        Log.wtf(TAG, "Error in receiving messages");
                     }
                     Message msg = Message.obtain();
                     MessageTypeAndMessage messageTypeAndMessage = new MessageTypeAndMessage(messageType, message);
@@ -476,11 +556,6 @@ public class DOSThemeActivity extends ThemeActivity {
                     uiHandler.sendMessage(msg);
                     message = "";
                     receiveMessage();
-                    try {
-                        Thread.sleep(500);
-                    } catch (Exception e) {
-
-                    }
                 }
             }
         }

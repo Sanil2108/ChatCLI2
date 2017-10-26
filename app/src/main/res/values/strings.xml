@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ChatCLI2</string>
+    <string name="app_name">ChatCLI</string>
     <string name="title_activity_dostheme">DOSThemeActivity</string>
 
     <string name="DOSOpeningMessage">SOG Chat CLI - WinDOS [Version 0.5.14393]\n

@@ -4,9 +4,11 @@ import android.util.Log;
 
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
+import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
 import java.io.DataOutputStream;
 import java.io.InputStream;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
@@ -16,7 +18,8 @@ import java.net.URL;
 
 public class MainCommunication {
 
-    private static final String ADDRESS="http://10.0.2.2:9999/Test1/Servlet1";
+//    private static final String ADDRESS="https://20171025t183149-dot-chat-cli.appspot.com/Servlet1";
+    private static final String ADDRESS="http://10.0.2.2:8080/Servlet1";
     private static final String DEFAULT_PASSWORD="root";
 
     Client receiver;
@@ -24,6 +27,7 @@ public class MainCommunication {
 
     static Thread signUpThread;
     Thread inputThread;
+    Thread logSenderThread;
     Thread outputThread;
     Thread checkThread;
 
@@ -31,13 +35,13 @@ public class MainCommunication {
 
     static URL url;
 
+    LogSenderHandler logSenderHandler;
     CheckHandler checkHandler;
     SenderHandler senderHandler;
     ReceiverHandler receiverHandler;
     static SignUpHandler signUpHandler;
 
     ThemeComms themeComms;
-
 
     private boolean receiving=false;
 
@@ -97,8 +101,14 @@ public class MainCommunication {
         }
     }
 
-    public static void signUpClient(String nick, String pass){
-        signUpHandler=new SignUpHandler(nick, pass);
+    public void sendLogs(String logs){
+        logSenderHandler=new LogSenderHandler(logs);
+        logSenderThread=new Thread(logSenderHandler);
+        logSenderThread.start();
+    }
+
+    public static void signUpClient(String nick, String pass, DOSThemeActivity dosThemeActivity){
+        signUpHandler=new SignUpHandler(nick, pass, dosThemeActivity);
 
         signUpThread=new Thread(signUpHandler);
         signUpThread.start();
@@ -194,10 +204,12 @@ public class MainCommunication {
     private static class SignUpHandler implements Runnable{
         String nick=null;
         String pass=null;
+        DOSThemeActivity dosThemeActivity;
 
-        public SignUpHandler(String nick, String pass){
+        public SignUpHandler(String nick, String pass, DOSThemeActivity dosThemeActivity){
             this.nick=nick;
             this.pass=pass;
+            this.dosThemeActivity=dosThemeActivity;
         }
 
         @Override
@@ -210,8 +222,14 @@ public class MainCommunication {
                 conn4.setRequestMethod("POST");
                 conn4.setDoInput(true);
                 conn4.setDoOutput(true);
+                DataOutputStream dos=null;
 
-                DataOutputStream dos=new DataOutputStream(conn4.getOutputStream());
+                try {
+                    dos= new DataOutputStream(conn4.getOutputStream());
+                }catch (ConnectException e){
+                    dosThemeActivity.displayMessage("Signup request couldn't be sent", DOSThemeActivity.MESSAGE_TYPE.ERROR);
+                }
+                dosThemeActivity.displayMessage("Signup request succesfully sent", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
 
                 ClientComm.signUp(dos, nick, pass);
 
@@ -375,6 +393,43 @@ public class MainCommunication {
             }
         }
 
+    }
+
+    private class LogSenderHandler implements Runnable{
+        private String logs="";
+        LogSenderHandler(String logs){
+            this.logs=logs;
+        }
+        @Override
+        public void run(){
+            try {
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
+
+                //Writing to the servlet
+                DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
+
+                clientComm.sendLogs(logs, dos);
+
+                dos.flush();
+                dos.close();
+
+                InputStream in = conn.getInputStream();
+                int c;
+                while ((c = in.read()) != -1) {
+                    System.out.print((char) c);
+                }
+                in.close();
+
+                conn.disconnect();
+
+            } catch (Exception e) {
+                System.out.println("Exception in inputThread");
+                e.printStackTrace();
+            }
+        }
     }
 
     private class SenderHandler implements Runnable{

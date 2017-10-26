@@ -6,6 +6,7 @@ import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.communication.MainCommunication;
 import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
+import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
 import java.util.ArrayList;
 
@@ -14,18 +15,21 @@ import java.util.ArrayList;
  */
 
 public class ThemeComms {
+    DOSThemeActivity dosThemeActivity;
     MainCommunication communication;
 
     public String newMessage="";
     public String newCheckedMessage="";
 
-    public ThemeComms(String user, String password, String receiver){
+    public ThemeComms(String user, String password, String receiver, DOSThemeActivity dosThemeActivity){
         communication=new MainCommunication(user, password, receiver, this);
         communication.startReceiving();
+        this.dosThemeActivity=dosThemeActivity;
     }
 
-    public ThemeComms(String user, String password){
+    public ThemeComms(String user, String password, DOSThemeActivity dosThemeActivity){
         communication=new MainCommunication(user, password, this);
+        this.dosThemeActivity=dosThemeActivity;
     }
 
     public String receiveMessages(){
@@ -34,8 +38,8 @@ public class ThemeComms {
         return temp;
     }
 
-    public static void signUpClient(String nick, String pass){
-        MainCommunication.signUpClient(nick, pass);
+    public static void signUpClient(String nick, String pass, DOSThemeActivity dosThemeActivity){
+        MainCommunication.signUpClient(nick, pass, dosThemeActivity);
     }
 
     public String checkMessages(String user, DatabaseHandlerForConnections databaseHandlerForConnections){
@@ -74,6 +78,10 @@ public class ThemeComms {
 
     public void sendMessage(String message){
         communication.sendMessage(message);
+    }
+
+    public void sendLogs(String logs){
+        communication.sendLogs(logs);
     }
 
 }
