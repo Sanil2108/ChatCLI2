@@ -65,8 +65,6 @@ public class DOSThemeActivity extends Activity {
     //SQLite code
     DatabaseHandlerForConnections databaseHandlerForConnections;
 
-    private static final boolean LOGGING=false;
-
     //Sender is the current user and receiver is the other guy.
     //I know, confusing
 //    private final static String SENDER="sanil";
@@ -88,6 +86,7 @@ public class DOSThemeActivity extends Activity {
     private static final String LOGIN_FILE_USER_KEY="USER_NAME";
     private static final String LOGIN_FILE_PASS_KEY="USER_PASSWORD";
 
+    private static boolean LOGGING=false;
     private static final String LOG_FILE_NAME="LOG_FILE";
     private static final String LOG_FILE_KEY="LOG";
 
@@ -131,7 +130,9 @@ public class DOSThemeActivity extends Activity {
             senderClient=oldClient;
             loggedIn=true;
             themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
-            displayMessage("You are logged in as "+senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
+            if(themeComms.checkIfClientIsAuthentic(senderClient.getNick(), senderClient.getPass())){
+                displayMessage("You are logged in as " + senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
+            }
         }
 
     }
@@ -349,6 +350,36 @@ public class DOSThemeActivity extends Activity {
                     }
                 }
                 break;
+            case "@status":
+                String displayString="";
+                if(loggedIn){
+                    displayString+="You are logged in as "+senderClient.getNick()+".";
+                }else{
+                    displayString+="You are not logged in.";
+                }
+                displayString+="\n";
+                if(connected){
+                    displayString+="You are connected to "+currentReceiver+".";
+                }else{
+                    displayString+="You are not connected to anyone.";
+                }
+                displayString+="\n";
+                if(cmd.length>1 && cmd[1]!=null && cmd[1].equals("debug")){
+                    if(themeCommsRegistered){
+                        displayString+="Themecomms is registered.";
+                    }else{
+                        displayString+="Themecomms is not registered.";
+                    }
+                    displayString+="\n";
+                    if(LOGGING){
+                        displayString+="Logging is set to true.";
+                    }else{
+                        displayString+="Logging is set to false.";
+                    }
+                }
+
+                displayMessage(displayString, MESSAGE_TYPE.DEFAULT);
+                break;
             case "@sendlog":
                 if(!LOGGING){
                     displayMessage("Logging function is right now disabled.", MESSAGE_TYPE.ERROR);
@@ -363,6 +394,28 @@ public class DOSThemeActivity extends Activity {
                 }else {
                     themeComms.sendLogs(logs);
                     displayMessage("Thanks! For submitting logs. This helps us improve the application and your overall experience", MESSAGE_TYPE.DEFAULT);
+                }
+                break;
+            case "@log":
+                if(cmd.length>1 && cmd[1]!=null){
+                    if(cmd[1].toLowerCase().equals("true")){
+                        if(LOGGING){
+                            displayMessage("LOGGING is already set to true", MESSAGE_TYPE.ERROR);
+                        }else{
+                            displayMessage("LOGGING is set to true", MESSAGE_TYPE.DEFAULT);
+                        }
+                        LOGGING=true;
+                    }
+                    if(cmd[1].toLowerCase().equals("false")){
+                        if(LOGGING){
+                            displayMessage("LOGGING is set to false", MESSAGE_TYPE.DEFAULT);
+                        }else{
+                            displayMessage("LOGGING is already set to false", MESSAGE_TYPE.ERROR);
+                        }
+                        LOGGING=false;
+                    }
+                }else{
+                    displayMessage("Wrong number of arguments", MESSAGE_TYPE.ERROR);
                 }
                 break;
             case "@logout":
@@ -579,6 +632,18 @@ public class DOSThemeActivity extends Activity {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        switch(keyCode){
+            case KeyEvent.KEYCODE_ENTER:
+                execButton();
+                break;
+            default:
+                super.onKeyUp(keyCode, event);
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     private class MessageTypeAndMessage{

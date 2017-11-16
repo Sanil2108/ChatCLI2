@@ -1,6 +1,7 @@
 package com.sanilk.chatcli2.communication;
 
 import android.util.Log;
+import android.widget.Toast;
 
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.themes.ThemeComms;
@@ -18,7 +19,7 @@ import java.net.URL;
 
 public class MainCommunication {
 
-//    private static final String ADDRESS="https://20171025t183149-dot-chat-cli.appspot.com/Servlet1";
+//    private static final String ADDRESS="https://20171028t065813-dot-chat-cli.appspot.com/Servlet1";
     private static final String ADDRESS="http://10.0.2.2:8080/Servlet1";
     private static final String DEFAULT_PASSWORD="root";
 

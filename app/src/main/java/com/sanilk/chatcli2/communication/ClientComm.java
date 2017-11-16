@@ -23,7 +23,13 @@ public class ClientComm {
 
     public static void checkIfClientIsAuthentic(DataOutputStream dos, Client sender){
         try{
-            dos.writeUTF(sender.nick+":AUTHENTICATE::"+sender.getPass()+":");
+            String finalXML="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+                    "<request>\n" +
+                    "    <type>AUTHENTICATE</type>\n" +
+                    "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
+                    "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+                    "</request>";
+            dos.writeUTF(finalXML);
             dos.flush();
             dos.close();
         }catch (Exception e){
@@ -42,9 +48,17 @@ public class ClientComm {
     }
 
     public void sendMessage(String message, DataOutputStream dos){
-        if(message!=null) {
+        if(message!=null && message!="" && message!="\n") {
             try {
                 message += "\n";
+//                String finalMessage="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+//                        "<request>\n" +
+//                        "    <type>SEND</type>\n" +
+//                        "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
+//                        "    <receiver_nick>"+receiver.nick+"</receiver_nick>\n" +
+//                        "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+//                        "    <message>"+message+"</message>\n" +
+//                        "</request>";
                 dos.writeUTF(sender.nick + ":SEND:" + receiver.nick + ":" + sender.getPass() + ":" + message);
                 dos.flush();
                 dos.close();
@@ -67,7 +81,13 @@ public class ClientComm {
 
     public static void signUp(DataOutputStream dos, String nick, String pass){
         try{
-            dos.writeUTF(nick+":SIGN_UP::"+pass+":");
+            String finalXML="" +
+                    "<request>\n" +
+                    "    <type>SIGN_UP</type>\n" +
+                    "    <sender_nick>"+nick+"</sender_nick>\n" +
+                    "    <sender_password>"+pass+"</sender_password>\n" +
+                    "</request>";
+            dos.writeUTF(finalXML);
             dos.flush();
             dos.close();
         }catch (Exception e){
