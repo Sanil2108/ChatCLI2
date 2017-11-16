@@ -51,15 +51,15 @@ public class ClientComm {
         if(message!=null && message!="" && message!="\n") {
             try {
                 message += "\n";
-//                String finalMessage="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
-//                        "<request>\n" +
-//                        "    <type>SEND</type>\n" +
-//                        "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
-//                        "    <receiver_nick>"+receiver.nick+"</receiver_nick>\n" +
-//                        "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
-//                        "    <message>"+message+"</message>\n" +
-//                        "</request>";
-                dos.writeUTF(sender.nick + ":SEND:" + receiver.nick + ":" + sender.getPass() + ":" + message);
+                String finalMessage="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+                        "<request>\n" +
+                        "    <type>SEND</type>\n" +
+                        "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
+                        "    <receiver_nick>"+receiver.nick+"</receiver_nick>\n" +
+                        "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+                        "    <message>"+message+"</message>\n" +
+                        "</request>";
+                dos.writeUTF(finalMessage);
                 dos.flush();
                 dos.close();
             } catch (IOException e) {
@@ -81,7 +81,7 @@ public class ClientComm {
 
     public static void signUp(DataOutputStream dos, String nick, String pass){
         try{
-            String finalXML="" +
+            String finalXML="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
                     "<request>\n" +
                     "    <type>SIGN_UP</type>\n" +
                     "    <sender_nick>"+nick+"</sender_nick>\n" +
@@ -115,7 +115,14 @@ public class ClientComm {
 
     public void receiveMessage(DataOutputStream dos){
         try{
-            dos.writeUTF(sender+":RECEIVE:"+receiver+":"+sender.getPass()+":");
+            String finalXML="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+                    "<request>\n" +
+                    "    <type>RECEIVE</type>\n" +
+                    "    <sender_nick>"+sender+"</sender_nick>\n" +
+                    "    <receiver_nick>"+receiver+"</receiver_nick>\n" +
+                    "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+                    "</request>";
+            dos.writeUTF(finalXML);
             dos.flush();
             dos.close();
         }catch (IOException e){
