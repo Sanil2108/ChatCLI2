@@ -4,6 +4,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.sanilk.chatcli2.MainActivity;
+import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
 import com.sanilk.chatcli2.themes.ThemeComms;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
@@ -232,7 +233,7 @@ public class MainCommunication {
                 }
                 dosThemeActivity.displayMessage("Signup request succesfully sent", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
 
-                ClientComm.signUp(dos, nick, pass);
+                SignUpResponse signUpResponse=ClientComm.signUp(dos, nick, pass);
 
                 InputStream in=conn4.getInputStream();
                 int c;

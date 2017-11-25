@@ -1,5 +1,7 @@
 package com.sanilk.chatcli2.communication;
 
+import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -79,7 +81,7 @@ public class ClientComm {
         }
     }
 
-    public static void signUp(DataOutputStream dos, String nick, String pass){
+    public static SignUpResponse signUp(DataOutputStream dos, String nick, String pass){
         try{
             String finalXML="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
                     "<request>\n" +
@@ -94,6 +96,8 @@ public class ClientComm {
             System.out.println("Exception in ClientComm : ");
             e.printStackTrace();
         }
+
+        return null;
     }
 
     public void checkMessages(DataOutputStream dos, String[] senders){
