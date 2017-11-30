@@ -15,7 +15,7 @@ import java.util.ArrayList;
  */
 
 public class ThemeComms {
-    DOSThemeActivity dosThemeActivity;
+    public DOSThemeActivity dosThemeActivity;
     MainCommunication communication;
 
     public String newMessage="";
@@ -60,8 +60,8 @@ public class ThemeComms {
         return temp;
     }
 
-    public static boolean checkIfClientIsAuthentic(String sender, String pass){
-        return MainCommunication.isClientAuthentic(sender, pass);
+    public static boolean checkIfClientIsAuthentic(String sender, String pass, DOSThemeActivity dosThemeActivity){
+        return MainCommunication.isClientAuthentic(sender, pass, dosThemeActivity);
     }
 
     public void newMessagesChecked(String newCheckedMessage){

@@ -5,6 +5,9 @@ import android.widget.Toast;
 
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.communication.response.XMLParser;
+import com.sanilk.chatcli2.communication.response.authenticate.AuthenticateResponse;
+import com.sanilk.chatcli2.communication.response.receive.ReceiveResponse;
+import com.sanilk.chatcli2.communication.response.send.SendResponse;
 import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
 import com.sanilk.chatcli2.themes.ThemeComms;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
@@ -85,7 +88,7 @@ public class MainCommunication {
             url = new URL(ADDRESS);
             clientComm = ClientComm.getInstance();
 
-            senderHandler=new SenderHandler();
+            senderHandler=new SenderHandler(themeComms.dosThemeActivity);
             inputThread = new Thread(senderHandler);
             inputThread.start();
             receiverHandler=new ReceiverHandler();
@@ -120,12 +123,12 @@ public class MainCommunication {
 
     static boolean authentic;
     static boolean authenticatingThreadFinished=false;
-    public static boolean isClientAuthentic(final String sender, final String pass){
+    public static boolean isClientAuthentic(final String sender, final String pass, final DOSThemeActivity dosThemeActivity){
 
         Thread t=new Thread(new Runnable() {
             @Override
             public void run() {
-                if(isClientAuthenticFromInnerClass(sender, pass)){
+                if(isClientAuthenticFromInnerClass(sender, pass, dosThemeActivity)){
                     authentic=true;
                 }else{
                     authentic=false;
@@ -144,7 +147,7 @@ public class MainCommunication {
         return authentic;
     }
 
-    private static boolean isClientAuthenticFromInnerClass(String sender, String pass){
+    private static boolean isClientAuthenticFromInnerClass(String sender, String pass, DOSThemeActivity dosThemeActivity){
         String finalMessage="";
         try {
             if(url==null){
@@ -160,25 +163,27 @@ public class MainCommunication {
             dos.flush();
             dos.close();
 
-            InputStream in=conn5.getInputStream();
-            int c;
-            while((c = in.read()) != -1){
-                System.out.print((char)c);
-                finalMessage+=(char)c;
-            }
-            in.close();
+            DataInputStream din=new DataInputStream(conn5.getInputStream());
+            String response=din.readUTF();
+            AuthenticateResponse authenticateResponse=XMLParser.parseAuthenticateResponse(response);
 
+            din.close();
             conn5.disconnect();
+            authenticatingThreadFinished=true;
+
+            if(authenticateResponse.isAuthentic()){
+                dosThemeActivity.displayMessage("You are now logged in", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
+                return true;
+            }else{
+                dosThemeActivity.displayMessage("Couldn't log you in. Error code - "+authenticateResponse.getErrorCode()+
+                        "\nError details - "+authenticateResponse.getErrorDetails(), DOSThemeActivity.MESSAGE_TYPE.ERROR);
+                return false;
+            }
 
         }catch (Exception e){
             e.printStackTrace();
         }
 
-        authenticatingThreadFinished=true;
-
-        if(finalMessage.toCharArray()[finalMessage.toCharArray().length-1] == 'T'){
-            return true;
-        }
         return false;
     }
 
@@ -302,17 +307,19 @@ public class MainCommunication {
                     DataOutputStream dos=new DataOutputStream(conn2.getOutputStream());
                     clientComm.receiveMessage(dos);
 
-                    InputStream in=conn2.getInputStream();
-                    DataInputStream din=new DataInputStream(in);
-                    String message=din.readUTF();
-
-                    if(message!="") {
-                        themeComms.newMessageReceived(message);
-                    }
-
                     dos.flush();
                     dos.close();
-                    in.close();
+
+                    DataInputStream din=new DataInputStream(conn2.getInputStream());
+                    String response=din.readUTF();
+
+                    ReceiveResponse receiveResponse=XMLParser.parseReceiveResponse(response);
+
+                    if(receiveResponse.getMessage()!="") {
+                        themeComms.newMessageReceived(receiveResponse.getMessage());
+                    }
+
+                    din.close();
 
                     conn2.disconnect();
 
@@ -458,6 +465,11 @@ public class MainCommunication {
 
     private class SenderHandler implements Runnable{
         String message;
+        DOSThemeActivity dosThemeActivity;
+
+        public SenderHandler(DOSThemeActivity dosThemeActivity){
+            this.dosThemeActivity=dosThemeActivity;
+        }
 
         public void newMessage(String message){
             this.message=message;
@@ -480,17 +492,16 @@ public class MainCommunication {
                         String msg = message;
                         clientComm.sendMessage(msg, dos);
 
-                        message = "";
-
                         dos.flush();
                         dos.close();
 
-                        InputStream in = conn.getInputStream();
-                        int c;
-                        while ((c = in.read()) != -1) {
-                            System.out.print((char) c);
+                        DataInputStream din=new DataInputStream(conn.getInputStream());
+                        String response=din.readUTF();
+                        SendResponse sendResponse=XMLParser.parseSendResponse(response);
+                        if(sendResponse.isSuccessful()){
+                            message = "";
                         }
-                        in.close();
+                        din.close();
 
                         conn.disconnect();
                     }

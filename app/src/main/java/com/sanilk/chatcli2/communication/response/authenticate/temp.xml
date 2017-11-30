@@ -1,0 +1,8 @@
+<response>
+    <type>AUTHENTICATE</type>
+    <!-- successful simply tells whether the server received the request -->
+    <successful></successful>
+    <authentic></authentic>
+    <error_code></error_code>
+    <error_details></error_details>
+</response>

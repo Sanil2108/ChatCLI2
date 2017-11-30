@@ -139,7 +139,7 @@ public class DOSThemeActivity extends Activity {
             senderClient=oldClient;
             loggedIn=true;
             themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
-            if(themeComms.checkIfClientIsAuthentic(senderClient.getNick(), senderClient.getPass())){
+            if(themeComms.checkIfClientIsAuthentic(senderClient.getNick(), senderClient.getPass(), this)){
                 displayMessage("You are logged in as " + senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
             }
         }
@@ -185,7 +185,8 @@ public class DOSThemeActivity extends Activity {
 
     private Client getLastLogin(){
         SharedPreferences sharedPreferences=getApplicationContext().getSharedPreferences(LOGIN_FILE_NAME, MODE_PRIVATE);
-        String user=sharedPreferences.getString(LOGIN_FILE_USER_KEY, "");String pass=sharedPreferences.getString(LOGIN_FILE_PASS_KEY, "");
+        String user=sharedPreferences.getString(LOGIN_FILE_USER_KEY, "");
+        String pass=sharedPreferences.getString(LOGIN_FILE_PASS_KEY, "");
         Client client=new Client(user, pass);
         if(user=="" || pass==""){
             return null;
@@ -276,6 +277,9 @@ public class DOSThemeActivity extends Activity {
                     }
                 });
             }
+            mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+            mainScrollView.scrollTo(0, mainContainer.getBottom());
+            cli.requestFocus();
         }
 
     }
@@ -339,6 +343,7 @@ public class DOSThemeActivity extends Activity {
 
     public void execButton(){
         mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+        cli.requestFocus();
 //        mainScrollView.scrollTo(0, ((LinearLayout)findViewById(R.id.dos_main_main_container)).getBottom());
         String completeCommand = cli.getText().toString();
         cli.setText("");
@@ -374,7 +379,7 @@ public class DOSThemeActivity extends Activity {
         String receiver;
         switch (cmd[0]){
             case "@login":
-                if(!themeComms.checkIfClientIsAuthentic(cmd[1], cmd[2])){
+                if(!themeComms.checkIfClientIsAuthentic(cmd[1], cmd[2], this)){
                     displayMessage("Login attempt failed", MESSAGE_TYPE.ERROR);
                 }else{
                     if(cmd.length<3){
@@ -416,6 +421,9 @@ public class DOSThemeActivity extends Activity {
                 }
 
                 displayMessage(displayString, MESSAGE_TYPE.DEFAULT);
+                break;
+            case "@clear":
+                mainContainer.removeAllViews();
                 break;
             case "@sendlog":
                 if(!LOGGING){
