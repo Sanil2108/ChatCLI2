@@ -12,5 +12,6 @@
     <color name="DOSReceiver">#d81717</color>
     <color name="DOSErrorBackground">#f00</color>
     <color name="DOSErrorText">#fff</color>
+    <color name="DOSborder">#44683a</color>
 
 </resources>

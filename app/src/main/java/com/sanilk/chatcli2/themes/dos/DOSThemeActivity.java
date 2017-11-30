@@ -3,8 +3,10 @@ package com.sanilk.chatcli2.themes.dos;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
@@ -17,6 +19,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -55,7 +59,7 @@ public class DOSThemeActivity extends Activity {
 
     ReceiverThreadRunnable receiverThreadRunnable;
 
-    Button tempExecButton;
+    ImageView tempExecButton;
 
     TextView senderTextView;
     TextView messageTextView;
@@ -90,6 +94,11 @@ public class DOSThemeActivity extends Activity {
     private static final String LOG_FILE_NAME="LOG_FILE";
     private static final String LOG_FILE_KEY="LOG";
 
+    private ScrollView mainScrollView;
+
+    private ImageView dosEncryptButton;
+    private boolean currentMessageLocked=false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -103,7 +112,7 @@ public class DOSThemeActivity extends Activity {
 
         mainContainer=(LinearLayout) findViewById(R.id.main_container);
         cli=(EditText)findViewById(R.id.dos_cli);
-        tempExecButton=(Button)findViewById(R.id.temp_exec_button);
+        tempExecButton=(ImageView)findViewById(R.id.temp_exec_button);
 
         uiHandler = new Handler(Looper.getMainLooper()){
             @Override
@@ -134,6 +143,32 @@ public class DOSThemeActivity extends Activity {
                 displayMessage("You are logged in as " + senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
             }
         }
+
+        mainScrollView=(ScrollView)findViewById(R.id.dos_scroll_view);
+
+        dosEncryptButton=(ImageView)findViewById(R.id.dos_encrypt_button);
+        dosEncryptButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(Build.VERSION.SDK_INT>=24) {
+                    if (currentMessageLocked) {
+                        currentMessageLocked = false;
+                        dosEncryptButton.setImageDrawable(getDrawable(R.drawable.unlocked));
+                    } else {
+                        currentMessageLocked = true;
+                        dosEncryptButton.setImageDrawable(getDrawable(R.drawable.locked));
+                    }
+                }else{
+                    if (currentMessageLocked) {
+                        currentMessageLocked = false;
+                        dosEncryptButton.setImageDrawable(getResources().getDrawable(R.drawable.unlocked));
+                    } else {
+                        currentMessageLocked = true;
+                        dosEncryptButton.setImageDrawable(getResources().getDrawable(R.drawable.locked));
+                    }
+                }
+            }
+        });
 
     }
 
@@ -303,6 +338,8 @@ public class DOSThemeActivity extends Activity {
     }
 
     public void execButton(){
+        mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+//        mainScrollView.scrollTo(0, ((LinearLayout)findViewById(R.id.dos_main_main_container)).getBottom());
         String completeCommand = cli.getText().toString();
         cli.setText("");
         if(LOGGING) {
@@ -431,8 +468,11 @@ public class DOSThemeActivity extends Activity {
                 }
                 break;
             case "@signup":
+                if (cmd.length < 2) {
+                    displayMessage("Wrong number of arguments", MESSAGE_TYPE.ERROR);
+                    break;
+                }
                 themeComms.signUpClient(cmd[1], cmd[2], this);
-                displayMessage("Use @login [username] [password] to log in", MESSAGE_TYPE.DEFAULT);
                 break;
             case "@conn":
                 try {

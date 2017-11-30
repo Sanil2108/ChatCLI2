@@ -4,10 +4,12 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.sanilk.chatcli2.MainActivity;
+import com.sanilk.chatcli2.communication.response.XMLParser;
 import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
 import com.sanilk.chatcli2.themes.ThemeComms;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.InputStream;
 import java.net.ConnectException;
@@ -204,6 +206,8 @@ public class MainCommunication {
     }
 
     private static class SignUpHandler implements Runnable{
+        static final int MILLISECONDS=2000;
+
         String nick=null;
         String pass=null;
         DOSThemeActivity dosThemeActivity;
@@ -217,37 +221,59 @@ public class MainCommunication {
         @Override
         public void run(){
             try{
-                if(url==null){
-                    url=new URL(ADDRESS);
+//                while(true) {
+                if (url == null) {
+                    url = new URL(ADDRESS);
                 }
-                HttpURLConnection conn4=(HttpURLConnection)url.openConnection();
+                HttpURLConnection conn4 = (HttpURLConnection) url.openConnection();
                 conn4.setRequestMethod("POST");
                 conn4.setDoInput(true);
+//                conn4.setReadTimeout(2000);
                 conn4.setDoOutput(true);
-                DataOutputStream dos=null;
+                conn4.connect();
+                DataOutputStream dos = null;
 
                 try {
-                    dos= new DataOutputStream(conn4.getOutputStream());
-                }catch (ConnectException e){
-                    dosThemeActivity.displayMessage("Signup request couldn't be sent", DOSThemeActivity.MESSAGE_TYPE.ERROR);
+                    dos = new DataOutputStream(conn4.getOutputStream());
+                } catch (ConnectException e) {
+                    e.printStackTrace();
                 }
-                dosThemeActivity.displayMessage("Signup request succesfully sent", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
 
-                SignUpResponse signUpResponse=ClientComm.signUp(dos, nick, pass);
+                //basically check if this response object has the field successful as true or not
+                //if it does, break out of the while loop
+//                    InputStream in = conn4.getInputStream();
 
-                InputStream in=conn4.getInputStream();
-                int c;
-                while((c=in.read()) != -1){
-                    System.out.print((char)c);
-                }
-                in.close();
+                ClientComm.signUp(dos, nick, pass, null);
 
                 dos.flush();
                 dos.close();
 
+                String response="";
+                InputStream in = conn4.getInputStream();
+                DataInputStream din=new DataInputStream(in);
+                response=din.readUTF();
+                in.close();
+
                 conn4.disconnect();
 
+                SignUpResponse signUpResponse= XMLParser.parseSignUpResponse(response);
+                if(signUpResponse.isSuccessful()){
+                    dosThemeActivity.displayMessage("Successfully signed up!", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
+                }else{
+                    dosThemeActivity.displayMessage("Couldn't sign you up. Error code - "+signUpResponse.getErrorCode()
+                            +"\nError details - "+signUpResponse.getErrorDetails(), DOSThemeActivity.MESSAGE_TYPE.ERROR);
+                }
+
+                try{
+                    Thread.sleep(MILLISECONDS);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
+//                }
+
             }catch (Exception e){
+                Log.d("MainCommunication", e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -277,12 +303,8 @@ public class MainCommunication {
                     clientComm.receiveMessage(dos);
 
                     InputStream in=conn2.getInputStream();
-                    String message="";
-                    int c;
-                    while((c=in.read())!=-1){
-                        System.out.print((char)c);
-                        message+=(char)c;
-                    }
+                    DataInputStream din=new DataInputStream(in);
+                    String message=din.readUTF();
 
                     if(message!="") {
                         themeComms.newMessageReceived(message);

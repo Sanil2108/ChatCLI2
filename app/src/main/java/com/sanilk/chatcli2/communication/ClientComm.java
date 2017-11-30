@@ -1,9 +1,12 @@
 package com.sanilk.chatcli2.communication;
 
+import android.util.Log;
+
 import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Created by Admin on 16-06-2017.
@@ -81,7 +84,7 @@ public class ClientComm {
         }
     }
 
-    public static SignUpResponse signUp(DataOutputStream dos, String nick, String pass){
+    public static SignUpResponse signUp(DataOutputStream dos, String nick, String pass, InputStream in){
         try{
             String finalXML="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
                     "<request>\n" +
@@ -90,8 +93,7 @@ public class ClientComm {
                     "    <sender_password>"+pass+"</sender_password>\n" +
                     "</request>";
             dos.writeUTF(finalXML);
-            dos.flush();
-            dos.close();
+
         }catch (Exception e){
             System.out.println("Exception in ClientComm : ");
             e.printStackTrace();
@@ -102,12 +104,29 @@ public class ClientComm {
 
     public void checkMessages(DataOutputStream dos, String[] senders){
         try{
-            String allSenders="";
-            for(int i=0;i<senders.length;i++){
-                allSenders+=senders[i]+";";
+//            String allSenders="";
+//            for(int i=0;i<senders.length;i++){
+//                allSenders+=senders[i]+";";
+//            }
+            String finalXML="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+                    "<request>\n" +
+                    "    <type>CHECK</type>\n" +
+                    "    <sender_nick>"+sender.nick+"</sender_nick>\n" +
+                    "    <receivers>\n" +
+                    "        <receivers_count>"+senders.length+"</receivers_count>\n";
+            for(String sender:senders){
+                finalXML+=
+                        "<receiver>\n" +
+                        "   <receiver_name>"+sender+"</receiver_name>\n" +
+                        "</receiver>\n";
             }
+            finalXML+=
+                    "    </receivers>\n" +
+                    "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+                    "</request>";
+
 //            dos.writeUTF(sender.nick + ":SEND:" + "sanil2" + ":" + "abc");
-            dos.writeUTF(sender.nick+":CHECK::"+sender.getPass()+":"+allSenders);
+            dos.writeUTF(finalXML);
             dos.flush();
             dos.close();
         }catch (Exception e){
