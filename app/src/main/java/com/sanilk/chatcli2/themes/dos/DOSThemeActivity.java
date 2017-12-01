@@ -3,10 +3,7 @@ package com.sanilk.chatcli2.themes.dos;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.app.Activity;
@@ -15,13 +12,12 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -30,11 +26,10 @@ import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
-import java.io.DataInputStream;
-import java.io.File;
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 
 
 public class DOSThemeActivity extends Activity {
@@ -136,11 +131,10 @@ public class DOSThemeActivity extends Activity {
 
         Client oldClient = getLastLogin();
         if(oldClient!=null){
-            senderClient=oldClient;
-            loggedIn=true;
-            themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
-            if(themeComms.checkIfClientIsAuthentic(senderClient.getNick(), senderClient.getPass(), this)){
-                displayMessage("You are logged in as " + senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
+            if(themeComms.checkIfClientIsAuthentic(oldClient.getNick(), oldClient.getPass(), this)){
+                senderClient=oldClient;
+                loggedIn=true;
+                themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
             }
         }
 
@@ -497,9 +491,27 @@ public class DOSThemeActivity extends Activity {
                     establishConnection(senderClient.getNick(), receiver);
                     connected=true;
                     currentReceiver=receiver;
-                    displayMessage("Connection succesfully established", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("Connection successfully established", MESSAGE_TYPE.DEFAULT);
 
                     databaseHandlerForConnections.newConnection(senderClient.getNick(), currentReceiver);
+
+                    LayoutInflater inflater=(LayoutInflater)context.getSystemService(this.LAYOUT_INFLATER_SERVICE);
+                    inflater.inflate(R.layout.dostheme_button, mainContainer, true);
+                    TextView buttonTextView=(TextView)findViewById(R.id.dos_button_textview);
+                    buttonTextView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Log.d("DOSThemeActivity", "Load previous messages here");
+                        }
+                    });
+//                    DOSButton dosButton=new DOSButton(this, "Load previous messages");
+//                    dosButton.setOnClickListener(new View.OnClickListener() {
+//                        @Override
+//                        public void onClick(View v) {
+//                            Log.d("DOSThemeActivity", "Load previous messages");
+//                        }
+//                    });
+//                    mainContainer.addView(dosButton);
 
                 }catch (ArrayIndexOutOfBoundsException e){
                     displayMessage("ERROR, Array out of bounds exception, you sure you provided the name of the user you wanted to connect to ??", MESSAGE_TYPE.ERROR);
