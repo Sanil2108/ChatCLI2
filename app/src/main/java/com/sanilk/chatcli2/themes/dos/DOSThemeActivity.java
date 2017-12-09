@@ -23,7 +23,8 @@ import android.widget.TextView;
 
 import com.sanilk.chatcli2.R;
 import com.sanilk.chatcli2.communication.Client;
-import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
+import com.sanilk.chatcli2.database.DatabaseOpenHelper;
+import com.sanilk.chatcli2.database.Entities.User;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
 import org.w3c.dom.Text;
@@ -61,9 +62,6 @@ public class DOSThemeActivity extends Activity {
 
     DOSThemeActivity dosThemeActivity=this;
 
-    //SQLite code
-    DatabaseHandlerForConnections databaseHandlerForConnections;
-
     //Sender is the current user and receiver is the other guy.
     //I know, confusing
 //    private final static String SENDER="sanil";
@@ -94,12 +92,13 @@ public class DOSThemeActivity extends Activity {
     private ImageView dosEncryptButton;
     private boolean currentMessageLocked=false;
 
+    //SQLite code
+    private DatabaseOpenHelper databasOpenHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dostheme);
-
-        databaseHandlerForConnections=new DatabaseHandlerForConnections(this);
 
 //        getWindow().setSoftInputMode(
 //                WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
@@ -163,6 +162,8 @@ public class DOSThemeActivity extends Activity {
                 }
             }
         });
+
+        databasOpenHelper=new DatabaseOpenHelper(this);
 
     }
 
@@ -370,7 +371,7 @@ public class DOSThemeActivity extends Activity {
     }
 
     public void processCommand(String[] cmd){
-        String receiver;
+        String receiver="";
         switch (cmd[0]){
             case "@login":
                 if(!themeComms.checkIfClientIsAuthentic(cmd[1], cmd[2], this)){
@@ -485,6 +486,7 @@ public class DOSThemeActivity extends Activity {
                         currentReceiver = "";
                         connected = false;
                     }
+
                     receiver = cmd[1];
                     displayMessage("Establishing connection to "+receiver+" ...", MESSAGE_TYPE.DEFAULT);
                     //maybe add a percentage thing here. would need delete message method which deletes the last message though
@@ -493,7 +495,12 @@ public class DOSThemeActivity extends Activity {
                     currentReceiver=receiver;
                     displayMessage("Connection successfully established", MESSAGE_TYPE.DEFAULT);
 
-                    databaseHandlerForConnections.newConnection(senderClient.getNick(), currentReceiver);
+                    //SQLite code
+                    User clientUser=new User(senderClient.getNick());
+                    User connectedUser=new User(receiver);
+                    if(!databasOpenHelper.isConnection(clientUser, connectedUser)){
+                        databasOpenHelper.insertConnection(clientUser, connectedUser);
+                    }
 
                     LayoutInflater inflater=(LayoutInflater)context.getSystemService(this.LAYOUT_INFLATER_SERVICE);
                     inflater.inflate(R.layout.dostheme_button, mainContainer, true);
@@ -504,6 +511,7 @@ public class DOSThemeActivity extends Activity {
                             Log.d("DOSThemeActivity", "Load previous messages here");
                         }
                     });
+
 //                    DOSButton dosButton=new DOSButton(this, "Load previous messages");
 //                    dosButton.setOnClickListener(new View.OnClickListener() {
 //                        @Override
@@ -541,14 +549,16 @@ public class DOSThemeActivity extends Activity {
                 }
                 break;
             case "@list":
-                ArrayList<ContentValues> allUsers=databaseHandlerForConnections.getAllConnections();
+                User[] users=databasOpenHelper.getAllConnections(new User(senderClient.getNick()));
                 String finalString="";
-                for(ContentValues contentValues:allUsers){
-                    if(contentValues.get("user").equals(senderClient.getNick())){
-                        finalString+=contentValues.get("sender")+"\t";
+                if(users!=null) {
+                    for (User user : users) {
+                        finalString += user.nick + "\n";
                     }
+                    displayMessage(finalString, MESSAGE_TYPE.DEFAULT);
+                }else{
+                    displayMessage("You have no connections", MESSAGE_TYPE.DEFAULT);
                 }
-                displayMessage(finalString, MESSAGE_TYPE.DEFAULT);
                 break;
             case "@check":
                 checkMessages();
@@ -615,7 +625,6 @@ public class DOSThemeActivity extends Activity {
             themeComms = new ThemeComms(senderClient.getNick(), senderClient.getPass(), this);
         }
 //        checkingThread.start();
-        displayMessage(themeComms.checkMessages(senderClient.getNick(), databaseHandlerForConnections), MESSAGE_TYPE.DEFAULT);
 //        displayMessage(themeComms.newCheckedMessage, MESSAGE_TYPE.DEFAULT);
         Thread t=new Thread(new Runnable() {
             @Override

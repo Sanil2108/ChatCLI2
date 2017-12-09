@@ -172,7 +172,7 @@ public class MainCommunication {
             authenticatingThreadFinished=true;
 
             if(authenticateResponse.isAuthentic()){
-                dosThemeActivity.displayMessage("You are now logged in", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
+                dosThemeActivity.displayMessage("You are now logged in. ", DOSThemeActivity.MESSAGE_TYPE.DEFAULT);
                 return true;
             }else{
                 dosThemeActivity.displayMessage("Couldn't log you in. Error code - "+authenticateResponse.getErrorCode()+

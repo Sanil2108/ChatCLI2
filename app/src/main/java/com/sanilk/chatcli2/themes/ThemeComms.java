@@ -5,7 +5,6 @@ import android.content.ContentValues;
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.communication.MainCommunication;
-import com.sanilk.chatcli2.databases.DatabaseHandlerForConnections;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
 import java.util.ArrayList;
@@ -42,23 +41,22 @@ public class ThemeComms {
         MainCommunication.signUpClient(nick, pass, dosThemeActivity);
     }
 
-    public String checkMessages(String user, DatabaseHandlerForConnections databaseHandlerForConnections){
-        ArrayList<ContentValues> allInfo=databaseHandlerForConnections.getAllConnections();
-        ArrayList<String> allSendersList=new ArrayList<>();
-        for(ContentValues contentValues:allInfo){
-            if(contentValues.get("user").equals(user)){
-                allSendersList.add((String)contentValues.get("sender"));
-            }
-        }
-        String[] allSenders=new String[allSendersList.size()];
-        for(int i=0;i<allSenders.length;i++){
-            allSenders[i]=allSendersList.get(i);
-        }
-        communication.checkMessages(allSenders);
-        String temp=newMessage;
-        newMessage="";
-        return temp;
-    }
+//    public String checkMessages(String user, DatabaseHandlerForConnections databaseHandlerForConnections){
+//        ArrayList<String> allSendersList=new ArrayList<>();
+//        for(ContentValues contentValues:allInfo){
+//            if(contentValues.get("user").equals(user)){
+//                allSendersList.add((String)contentValues.get("sender"));
+//            }
+//        }
+//        String[] allSenders=new String[allSendersList.size()];
+//        for(int i=0;i<allSenders.length;i++){
+//            allSenders[i]=allSendersList.get(i);
+//        }
+//        communication.checkMessages(allSenders);
+//        String temp=newMessage;
+//        newMessage="";
+//        return temp;
+//    }
 
     public static boolean checkIfClientIsAuthentic(String sender, String pass, DOSThemeActivity dosThemeActivity){
         return MainCommunication.isClientAuthentic(sender, pass, dosThemeActivity);
