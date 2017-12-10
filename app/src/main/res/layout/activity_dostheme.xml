@@ -81,6 +81,7 @@
                 android:layout_height="match_parent">
 
                 <EditText
+                    android:textCursorDrawable="@drawable/dos_cursor"
                     android:paddingLeft="5dp"
                     android:background="@color/DOSBackground"
                     android:id="@+id/dos_cli"

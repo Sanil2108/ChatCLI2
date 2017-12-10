@@ -210,6 +210,56 @@ public class MainCommunication {
         checkHandler.startChecking(allSenders);
     }
 
+    public static class LoginHandler implements Runnable{
+        static final int MILLISECONDS=2000;
+
+        String nick="";
+        String pass="";
+        DOSThemeActivity dosThemeActivity;
+
+        public LoginHandler(String nick, String pass, DOSThemeActivity dosThemeActivity){
+            this.nick=nick;
+            this.pass=pass;
+            this.dosThemeActivity=dosThemeActivity;
+        }
+
+        @Override
+        public void run(){
+            try{
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public static class AuthenticationHandler implements Runnable{
+        static final int MILLISECONDS=2000;
+
+        String nick="";
+        String pass="";
+        DOSThemeActivity dosThemeActivity;
+
+        public AuthenticationHandler(String nick, String pass, DOSThemeActivity dosThemeActivity, ThemeComms comms){
+            this.nick=nick;
+            this.pass=pass;
+            this.dosThemeActivity=dosThemeActivity;
+        }
+
+        @Override
+        public void run(){
+            while(true) {
+                try {
+
+                    Thread.sleep(MILLISECONDS);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     private static class SignUpHandler implements Runnable{
         static final int MILLISECONDS=2000;
 
