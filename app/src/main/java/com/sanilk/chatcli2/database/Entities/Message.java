@@ -1,5 +1,8 @@
 package com.sanilk.chatcli2.database.Entities;
 
+import java.text.DateFormat;
+import java.util.Date;
+
 /**
  * Created by sanil on 9/12/17.
  */
@@ -18,5 +21,6 @@ public class Message {
     public Message(String contents, int encryptDuration){
         this.encryptDuration=encryptDuration;
         this.contents=contents;
+        this.timeAndDate= DateFormat.getDateTimeInstance().format(new Date());
     }
 }

@@ -15,7 +15,7 @@ import com.sanilk.chatcli2.database.Entities.User;
 
 public class DatabaseOpenHelper extends SQLiteOpenHelper {
 
-    private static int DATABASE_VERSION=4;
+    private static int DATABASE_VERSION=9;
     private static String DATABASE_NAME="CHAT_CLI_DATABASE";
     private Context context;
 
@@ -121,11 +121,11 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
     }
 
     public void insertConnection(User user1, User user2){
-//        String sql="insert into "+CONNECTIONS_TABLE_NAME+" Values ((select (Select max("+CONNECTIONS_TABLE_COLUMN_NAMES[0]+") from "+CONNECTIONS_TABLE_NAME+") +1), ?, ?);";
-//        this.getWritableDatabase().rawQuery(
-//                sql,
-//                new String[]{user1.nick, user2.nick}
-//        );
+        String sql="insert into "+CONNECTIONS_TABLE_NAME+" Values ((select (Select max("+CONNECTIONS_TABLE_COLUMN_NAMES[0]+") from "+CONNECTIONS_TABLE_NAME+") +1), ?, ?);";
+        this.getWritableDatabase().rawQuery(
+                sql,
+                new String[]{user1.nick, user2.nick}
+        );
 
         Cursor cursor=this.getReadableDatabase().rawQuery(
                 "SELECT MAX("+CONNECTIONS_TABLE_COLUMN_NAMES[0]+") FROM "+CONNECTIONS_TABLE_NAME,
@@ -196,6 +196,17 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         }
         sql+=");";
         db.execSQL(sql);
+
+        ContentValues contentValues=new ContentValues();
+        contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[0], 0);
+        contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[1], "NA");
+        contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[2], "NA");
+        contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[3], -1);
+        db.insert(
+                MESSAGE_TABLE_NAME,
+                null,
+                contentValues
+        );
     }
 
     private void insertMessage(Message message){
@@ -208,7 +219,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
             ContentValues contentValues = new ContentValues();
             contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[0], newId);
             contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[1], message.contents);
-            contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[2], DateFormat.getDateTimeInstance().format(new Date()));
+            contentValues.put(MESSAGE_TABLE_COLUMN_NAMES[2], message.timeAndDate);
             this.getWritableDatabase().insert(
                     MESSAGE_TABLE_NAME,
                     null,
@@ -251,7 +262,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         contentValues.put(MESSAGE_TO_USER_COLUMN_NAMES[0], 0);
         contentValues.put(MESSAGE_TO_USER_COLUMN_NAMES[1], 0);
         contentValues.put(MESSAGE_TO_USER_COLUMN_NAMES[2], "NA");
-        this.getWritableDatabase().insert(
+        db.insert(
                 MESSAGE_TO_USER_TABLE_NAME,
                 null,
                 contentValues
@@ -327,7 +338,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         contentValues.put(MESSAGE_FROM_USER_COLUMN_NAMES[0], 0);
         contentValues.put(MESSAGE_FROM_USER_COLUMN_NAMES[1], 0);
         contentValues.put(MESSAGE_FROM_USER_COLUMN_NAMES[2], "NA");
-        this.getWritableDatabase().insert(
+        db.insert(
                 MESSAGE_FROM_USER_TABLE_NAME,
                 null,
                 contentValues
@@ -376,6 +387,7 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         createMessageTable(db);
         createMessageToUserTable(db);
         createMessageFromUserTable(db);
+
     }
 
     @Override
@@ -395,7 +407,41 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         insertNewMessageFromUser(sender);
     }
 
-    public Message[] getMessages(int n){
+    public Message[] getMessages(int n, User client, User connectedUser){
+        //MessageFromUser table
+        String sql=
+                "select * from "+MESSAGE_TABLE_NAME+" WHere "+MESSAGE_TABLE_COLUMN_NAMES[0]+" in " +
+                        "(select "+MESSAGE_FROM_USER_COLUMN_NAMES[1]+" from "+MESSAGE_FROM_USER_TABLE_NAME+" where "+MESSAGE_FROM_USER_COLUMN_NAMES[2]+"=\'"+client.nick+"\') " +
+                        "and "+MESSAGE_TABLE_COLUMN_NAMES[0]+" in (select "+MESSAGE_TO_USER_COLUMN_NAMES[1]+" from "+MESSAGE_TO_USER_TABLE_NAME+" where "+
+                        MESSAGE_TO_USER_COLUMN_NAMES[2]+"=\'"+connectedUser.nick+"\');";
+        Cursor cursor=this.getWritableDatabase().rawQuery(
+                sql,
+                null
+        );
+        Message[] messagesFrom=new Message[cursor.getCount()];
+        int i=0;
+        if(cursor.moveToFirst()){
+            messagesFrom[i]=new Message(cursor.getString(1), cursor.getString(2), cursor.getInt(3));
+            cursor.moveToNext();
+        }
+        cursor.close();
+
+        //MessageToUser table
+        sql=
+                "select * from "+MESSAGE_TABLE_NAME+" WHere "+MESSAGE_TABLE_COLUMN_NAMES[0]+" in " +
+                        "(select "+MESSAGE_TO_USER_COLUMN_NAMES[1]+" from "+MESSAGE_TO_USER_TABLE_NAME+" where "+MESSAGE_TO_USER_COLUMN_NAMES[2]+"=\'"+client.nick+"\') " +
+                        "and "+MESSAGE_TABLE_COLUMN_NAMES[0]+" in (select "+MESSAGE_FROM_USER_COLUMN_NAMES[1]+" from "+MESSAGE_FROM_USER_TABLE_NAME+" where "+
+                        MESSAGE_FROM_USER_COLUMN_NAMES[2]+"=\'"+connectedUser.nick+"\');";
+        cursor=this.getWritableDatabase().rawQuery(
+                sql,
+                null
+        );
+        Message[] messagesTo=new Message[cursor.getCount()];
+        i=0;
+        if(cursor.moveToFirst()){
+            messagesTo[i]=new Message(cursor.getString(1), cursor.getString(2), cursor.getInt(3));
+            cursor.moveToNext();
+        }
         return null;
     }
 }

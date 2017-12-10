@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.communication.MainCommunication;
+import com.sanilk.chatcli2.database.DatabaseOpenHelper;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class ThemeComms {
 
     public String newMessage="";
     public String newCheckedMessage="";
+
+
 
     public ThemeComms(String user, String password, String receiver, DOSThemeActivity dosThemeActivity){
         communication=new MainCommunication(user, password, receiver, this);

@@ -337,6 +337,13 @@ public class DOSThemeActivity extends Activity {
     }
 
     public void execButton(){
+        if(loggedIn && connected) {
+            databasOpenHelper.getMessages(
+                    10,
+                    new User(senderClient.getNick()),
+                    new User(currentReceiver)
+            );
+        }
         mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
         cli.requestFocus();
 //        mainScrollView.scrollTo(0, ((LinearLayout)findViewById(R.id.dos_main_main_container)).getBottom());
@@ -573,6 +580,11 @@ public class DOSThemeActivity extends Activity {
                     }
                     displayMessage(message, MESSAGE_TYPE.SENT);
                     sendMessage(message);
+                    databasOpenHelper.newMessage(
+                            new User(senderClient.getNick()),
+                            new User(receiver),
+                            new com.sanilk.chatcli2.database.Entities.Message(message, -1)
+                    );
                 }
         }
 
@@ -661,6 +673,11 @@ public class DOSThemeActivity extends Activity {
             }
             String message=themeComms.receiveMessages();
             if(message!="" && message!=null) {
+                databasOpenHelper.newMessage(
+                        new User(currentReceiver),
+                        new User(senderClient.getNick()),
+                        new com.sanilk.chatcli2.database.Entities.Message(message, -1)
+                );
                 displayMessage(message, MESSAGE_TYPE.RECEIVED);
             }
         }
