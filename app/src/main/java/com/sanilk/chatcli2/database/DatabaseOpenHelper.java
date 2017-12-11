@@ -420,9 +420,14 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         );
         Message[] messagesFrom=new Message[cursor.getCount()];
         int i=0;
-        if(cursor.moveToFirst()){
-            messagesFrom[i]=new Message(cursor.getString(1), cursor.getString(2), cursor.getInt(3));
-            cursor.moveToNext();
+        if(cursor.moveToFirst()) {
+            while (true) {
+                messagesFrom[i] = new Message(cursor.getString(1), cursor.getString(2), cursor.getInt(3));
+                if(!cursor.moveToNext()){
+                    break;
+                }
+                i++;
+            }
         }
         cursor.close();
 
@@ -438,10 +443,37 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper {
         );
         Message[] messagesTo=new Message[cursor.getCount()];
         i=0;
-        if(cursor.moveToFirst()){
-            messagesTo[i]=new Message(cursor.getString(1), cursor.getString(2), cursor.getInt(3));
-            cursor.moveToNext();
+        if(cursor.moveToFirst()) {
+            while (true) {
+                messagesTo[i] = new Message(cursor.getString(1), cursor.getString(2), cursor.getInt(3));
+                if(!cursor.moveToNext()){
+                    break;
+                }
+                i++;
+            }
         }
         return null;
+    }
+
+//    public int getLastMessageId(){
+//        Cursor cursor=this.getReadableDatabase().rawQuery(
+//                "SELECT MAX("+MESSAGE_TABLE_COLUMN_NAMES[0]+") FROM "+MESSAGE_TABLE_NAME+";",
+//                null
+//        );
+//        if(cursor.moveToFirst()){
+//            return cursor.getInt(0);
+//        }
+//        return -1;
+//    }
+
+    public void clear(){
+        SQLiteDatabase db=this.getWritableDatabase();
+        dropUsersTable(db);
+        dropMessageTable(db);
+        dropConnectionsTable(db);
+        dropMessageToUserTable(db);
+        dropMessageFromUserTable(db);
+
+        onCreate(db);
     }
 }

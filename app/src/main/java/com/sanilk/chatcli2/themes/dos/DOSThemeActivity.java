@@ -1,6 +1,5 @@
 package com.sanilk.chatcli2.themes.dos;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
@@ -17,7 +16,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -27,9 +25,6 @@ import com.sanilk.chatcli2.database.DatabaseOpenHelper;
 import com.sanilk.chatcli2.database.Entities.User;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
-import org.w3c.dom.Text;
-
-import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -93,7 +88,7 @@ public class DOSThemeActivity extends Activity {
     private boolean currentMessageLocked=false;
 
     //SQLite code
-    private DatabaseOpenHelper databasOpenHelper;
+    private DatabaseOpenHelper databaseOpenHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,8 +158,8 @@ public class DOSThemeActivity extends Activity {
             }
         });
 
-        databasOpenHelper=new DatabaseOpenHelper(this);
-
+        databaseOpenHelper =new DatabaseOpenHelper(this);
+        databaseOpenHelper.clear();
     }
 
     private void storeLastLogin(){
@@ -337,13 +332,6 @@ public class DOSThemeActivity extends Activity {
     }
 
     public void execButton(){
-        if(loggedIn && connected) {
-            databasOpenHelper.getMessages(
-                    10,
-                    new User(senderClient.getNick()),
-                    new User(currentReceiver)
-            );
-        }
         mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
         cli.requestFocus();
 //        mainScrollView.scrollTo(0, ((LinearLayout)findViewById(R.id.dos_main_main_container)).getBottom());
@@ -392,6 +380,15 @@ public class DOSThemeActivity extends Activity {
                         displayMessage("Successfully logged in as "+senderClient.getNick(), MESSAGE_TYPE.DEFAULT);
                         storeLastLogin();
                     }
+                }
+                break;
+            case "@load":
+                if(loggedIn && connected) {
+                    databaseOpenHelper.getMessages(
+                            10,
+                            new User(senderClient.getNick()),
+                            new User(currentReceiver)
+                    );
                 }
                 break;
             case "@status":
@@ -505,8 +502,8 @@ public class DOSThemeActivity extends Activity {
                     //SQLite code
                     User clientUser=new User(senderClient.getNick());
                     User connectedUser=new User(receiver);
-                    if(!databasOpenHelper.isConnection(clientUser, connectedUser)){
-                        databasOpenHelper.insertConnection(clientUser, connectedUser);
+                    if(!databaseOpenHelper.isConnection(clientUser, connectedUser)){
+                        databaseOpenHelper.insertConnection(clientUser, connectedUser);
                     }
 
                     LayoutInflater inflater=(LayoutInflater)context.getSystemService(this.LAYOUT_INFLATER_SERVICE);
@@ -556,7 +553,7 @@ public class DOSThemeActivity extends Activity {
                 }
                 break;
             case "@list":
-                User[] users=databasOpenHelper.getAllConnections(new User(senderClient.getNick()));
+                User[] users= databaseOpenHelper.getAllConnections(new User(senderClient.getNick()));
                 String finalString="";
                 if(users!=null) {
                     for (User user : users) {
@@ -580,9 +577,9 @@ public class DOSThemeActivity extends Activity {
                     }
                     displayMessage(message, MESSAGE_TYPE.SENT);
                     sendMessage(message);
-                    databasOpenHelper.newMessage(
+                    databaseOpenHelper.newMessage(
                             new User(senderClient.getNick()),
-                            new User(receiver),
+                            new User(currentReceiver),
                             new com.sanilk.chatcli2.database.Entities.Message(message, -1)
                     );
                 }
@@ -673,7 +670,7 @@ public class DOSThemeActivity extends Activity {
             }
             String message=themeComms.receiveMessages();
             if(message!="" && message!=null) {
-                databasOpenHelper.newMessage(
+                databaseOpenHelper.newMessage(
                         new User(currentReceiver),
                         new User(senderClient.getNick()),
                         new com.sanilk.chatcli2.database.Entities.Message(message, -1)
