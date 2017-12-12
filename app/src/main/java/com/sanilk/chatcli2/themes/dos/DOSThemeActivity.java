@@ -686,7 +686,7 @@ public class DOSThemeActivity extends Activity {
                     if(message.encryptDuration>0){
                         //dont call display message here. do some other shit.
                     }else {
-                        displayMessage(message.contents, MESSAGE_TYPE.RECEIVED);
+                        displayMessage(message.contents+"\n", MESSAGE_TYPE.RECEIVED);
                     }
                 }
             }
