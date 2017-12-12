@@ -3,10 +3,12 @@ package com.sanilk.chatcli2.communication;
 import android.util.Log;
 
 import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
+import com.sanilk.chatcli2.database.Entities.Message;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 /**
  * Created by Admin on 16-06-2017.
@@ -52,19 +54,36 @@ public class ClientComm {
         this.sender=sender;
     }
 
-    public void sendMessage(String message, DataOutputStream dos){
-        if(message!=null && message!="" && message!="\n") {
+    public void sendMessage(ArrayList<Message> messages, DataOutputStream dos){
+        if(messages!=null && messages.size()!=0) {
+            String xml="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+                    "<request>\n" +
+                    "    <type>SEND</type>\n" +
+                    "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
+                    "    <receiver_nick>"+receiver.getNick()+"</receiver_nick>\n" +
+                    "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+                    "    <messages>\n";
+            for(int i=0;i<messages.size();i++){
+                if(messages.get(i).contents!="" && messages.get(i).contents!="\n"){
+                    xml+="\n<message>\n" +
+                        "   <contents>"+messages.get(i).contents+"</contents>\n" +
+                        "   <encrypt_duration>"+messages.get(i).encryptDuration+"</encrypt_duration>\n" +
+                        "</message>";
+                }
+            }
+            xml+="</messages>\n</request>";
             try {
-                message += "\n";
-                String finalMessage="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
-                        "<request>\n" +
-                        "    <type>SEND</type>\n" +
-                        "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
-                        "    <receiver_nick>"+receiver.nick+"</receiver_nick>\n" +
-                        "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
-                        "    <message>"+message+"</message>\n" +
-                        "</request>";
-                dos.writeUTF(finalMessage);
+//                message += "\n";
+//                String finalMessage="<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n" +
+//                        "<request>\n" +
+//                        "    <type>SEND</type>\n" +
+//                        "    <sender_nick>"+sender.getNick()+"</sender_nick>\n" +
+//                        "    <receiver_nick>"+receiver.nick+"</receiver_nick>\n" +
+//                        "    <sender_password>"+sender.getPass()+"</sender_password>\n" +
+////                        "    <message>"+message+"</message>\n" +
+//                        "    <encryption_duration>"+"</encryption_duration>" +
+//                        "</request>";
+                dos.writeUTF(xml);
                 dos.flush();
                 dos.close();
             } catch (IOException e) {

@@ -9,6 +9,7 @@ import com.sanilk.chatcli2.communication.response.authenticate.AuthenticateRespo
 import com.sanilk.chatcli2.communication.response.receive.ReceiveResponse;
 import com.sanilk.chatcli2.communication.response.send.SendResponse;
 import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
+import com.sanilk.chatcli2.database.Entities.Message;
 import com.sanilk.chatcli2.themes.ThemeComms;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
@@ -18,6 +19,7 @@ import java.io.InputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
  * Created by Admin on 16-06-2017.
@@ -199,7 +201,7 @@ public class MainCommunication {
         stopReceiving=true;
     }
 
-    public void sendMessage(final String message){
+    public void sendMessage(final Message message){
 //        if(inputThread.isAlive()){
 //            inputThread.
 //        }
@@ -365,8 +367,9 @@ public class MainCommunication {
 
                     ReceiveResponse receiveResponse=XMLParser.parseReceiveResponse(response);
 
-                    if(receiveResponse.getMessage()!="") {
-                        themeComms.newMessageReceived(receiveResponse.getMessage());
+                    ArrayList<Message> messages=receiveResponse.messages;
+                    for(Message message:messages){
+                        themeComms.newMessageReceived(message);
                     }
 
                     din.close();
@@ -514,22 +517,23 @@ public class MainCommunication {
     }
 
     private class SenderHandler implements Runnable{
-        String message;
+        ArrayList<Message> messages;
         DOSThemeActivity dosThemeActivity;
 
         public SenderHandler(DOSThemeActivity dosThemeActivity){
             this.dosThemeActivity=dosThemeActivity;
+            messages=new ArrayList<>();
         }
 
-        public void newMessage(String message){
-            this.message=message;
+        public void newMessage(Message message){
+            this.messages.add(message);
         }
 
         @Override
         public void run(){
             while(true) {
                 try {
-                    if(message!="" && message!=null) {
+                    if(messages.size()!=0 && messages!=null) {
 
                         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                         conn.setRequestMethod("POST");
@@ -539,8 +543,7 @@ public class MainCommunication {
                         //Writing to the servlet
                         DataOutputStream dos = new DataOutputStream(conn.getOutputStream());
 
-                        String msg = message;
-                        clientComm.sendMessage(msg, dos);
+                        clientComm.sendMessage(messages, dos);
 
                         dos.flush();
                         dos.close();
@@ -549,7 +552,7 @@ public class MainCommunication {
                         String response=din.readUTF();
                         SendResponse sendResponse=XMLParser.parseSendResponse(response);
                         if(sendResponse.isSuccessful()){
-                            message = "";
+                            messages.clear();
                         }
                         din.close();
 

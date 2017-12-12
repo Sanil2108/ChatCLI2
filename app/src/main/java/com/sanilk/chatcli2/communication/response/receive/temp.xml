@@ -3,6 +3,11 @@
     <succesful></succesful>
     <error_code></error_code>
     <error_details></error_details>
-    <message></message>
+    <messages>
+        <message>
+            <contents></contents>
+            <encryption_duration></encryption_duration>
+        </message>
+    </messages>
     <time_of_sending></time_of_sending>
 </response>

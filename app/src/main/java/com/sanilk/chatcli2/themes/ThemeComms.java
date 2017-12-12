@@ -6,9 +6,11 @@ import com.sanilk.chatcli2.MainActivity;
 import com.sanilk.chatcli2.communication.Client;
 import com.sanilk.chatcli2.communication.MainCommunication;
 import com.sanilk.chatcli2.database.DatabaseOpenHelper;
+import com.sanilk.chatcli2.database.Entities.Message;
 import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
 import java.util.ArrayList;
+import java.util.PriorityQueue;
 
 /**
  * Created by Admin on 18-06-2017.
@@ -18,25 +20,30 @@ public class ThemeComms {
     public DOSThemeActivity dosThemeActivity;
     MainCommunication communication;
 
-    public String newMessage="";
+    public ArrayList<Message> messages;
+//    public String newMessage="";
     public String newCheckedMessage="";
-
-
 
     public ThemeComms(String user, String password, String receiver, DOSThemeActivity dosThemeActivity){
         communication=new MainCommunication(user, password, receiver, this);
         communication.startReceiving();
         this.dosThemeActivity=dosThemeActivity;
+        messages=new ArrayList<>();
     }
 
     public ThemeComms(String user, String password, DOSThemeActivity dosThemeActivity){
         communication=new MainCommunication(user, password, this);
         this.dosThemeActivity=dosThemeActivity;
+        messages=new ArrayList<>();
     }
 
-    public String receiveMessages(){
-        String temp=newMessage;
-        newMessage="";
+    public ArrayList<Message> receiveMessages(){
+        ArrayList<Message> temp=new ArrayList<>();
+        for(int i=0;i<messages.size();i++){
+            temp.add(messages.get(i));
+            temp.remove(i);
+            i--;
+        }
         return temp;
     }
 
@@ -69,15 +76,15 @@ public class ThemeComms {
         this.newCheckedMessage=newCheckedMessage;
     }
 
-    public void newMessageReceived(String message){
-        newMessage+=message;
+    public void newMessageReceived(Message message){
+        messages.add(message);
     }
 
     public void disconnect(){
         communication.stopReceiving();
     }
 
-    public void sendMessage(String message){
+    public void sendMessage(Message message){
         communication.sendMessage(message);
     }
 

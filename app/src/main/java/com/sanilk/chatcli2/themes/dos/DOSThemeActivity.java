@@ -25,6 +25,7 @@ import com.sanilk.chatcli2.database.DatabaseOpenHelper;
 import com.sanilk.chatcli2.database.Entities.User;
 import com.sanilk.chatcli2.themes.ThemeComms;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -576,7 +577,13 @@ public class DOSThemeActivity extends Activity {
                         message+=cmd[i]+" ";
                     }
                     displayMessage(message, MESSAGE_TYPE.SENT);
-                    sendMessage(message);
+                    com.sanilk.chatcli2.database.Entities.Message actualMessage=
+                            new com.sanilk.chatcli2.database.Entities.Message(
+                                    message,
+                                    //actually put actual encryption duration here
+                                    -1
+                            );
+                    sendMessage(actualMessage);
                     databaseOpenHelper.newMessage(
                             new User(senderClient.getNick()),
                             new User(currentReceiver),
@@ -659,7 +666,7 @@ public class DOSThemeActivity extends Activity {
         t.start();
     }
 
-    public void sendMessage(String message) {
+    public void sendMessage(com.sanilk.chatcli2.database.Entities.Message message) {
         themeComms.sendMessage(message);
     }
 
@@ -668,15 +675,22 @@ public class DOSThemeActivity extends Activity {
             if(themeComms==null){
                 themeComms=new ThemeComms(senderClient.getNick(), senderClient.getPass(), dosThemeActivity);
             }
-            String message=themeComms.receiveMessages();
-            if(message!="" && message!=null) {
-                databaseOpenHelper.newMessage(
-                        new User(currentReceiver),
-                        new User(senderClient.getNick()),
-                        new com.sanilk.chatcli2.database.Entities.Message(message, -1)
-                );
-                displayMessage(message, MESSAGE_TYPE.RECEIVED);
+            ArrayList<com.sanilk.chatcli2.database.Entities.Message> messages=new ArrayList<>(themeComms.messages);
+            for(com.sanilk.chatcli2.database.Entities.Message message:messages){
+                if(messages.size()!=0 && messages!=null) {
+                    databaseOpenHelper.newMessage(
+                            new User(currentReceiver),
+                            new User(senderClient.getNick()),
+                            new com.sanilk.chatcli2.database.Entities.Message(message.contents, -1)
+                    );
+                    if(message.encryptDuration>0){
+                        //dont call display message here. do some other shit.
+                    }else {
+                        displayMessage(message.contents, MESSAGE_TYPE.RECEIVED);
+                    }
+                }
             }
+            themeComms.messages.clear();
         }
     }
 

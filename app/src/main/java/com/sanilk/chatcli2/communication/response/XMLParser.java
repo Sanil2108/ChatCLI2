@@ -4,6 +4,7 @@ import com.sanilk.chatcli2.communication.response.authenticate.AuthenticateRespo
 import com.sanilk.chatcli2.communication.response.receive.ReceiveResponse;
 import com.sanilk.chatcli2.communication.response.send.SendResponse;
 import com.sanilk.chatcli2.communication.response.sign_up.SignUpResponse;
+import com.sanilk.chatcli2.database.Entities.Message;
 
 import java.io.InputStream;
 import java.io.StringReader;
@@ -165,10 +166,19 @@ public class XMLParser {
 
             int eventType=xmlPullParser.getEventType();
             String text="";
+            String contents="";
+            int encryptDuration=-2;
             ReceiveResponse receiveResponse=new ReceiveResponse();
             while(eventType!=XmlPullParser.END_DOCUMENT){
                 String tagName=xmlPullParser.getName();
                 switch (eventType){
+//                    case XmlPullParser.START_TAG:
+//                        if(tagName.equalsIgnoreCase(ReceiveResponse.MESSAGES_ROOT)){
+//                            while(true){
+//                                eventType=xmlPullParser.next();
+//                                while()
+//                            }
+//                        }
                     case XmlPullParser.TEXT:
                         text=xmlPullParser.getText();
                         break;
@@ -180,14 +190,22 @@ public class XMLParser {
                                 receiveResponse.setSuccessful(false);
                             }
                         }
+                        if(tagName.equalsIgnoreCase(ReceiveResponse.CONTENTS)){
+                            contents=text;
+                        }
+                        if(tagName.equalsIgnoreCase(ReceiveResponse.ENCRYPTION_DURATION)){
+                            encryptDuration=Integer.parseInt(text);
+                        }
+                        if(tagName.equalsIgnoreCase(ReceiveResponse.MESSAGE)){
+                            receiveResponse.messages.add(
+                                    new Message(contents, encryptDuration)
+                            );
+                        }
                         if(tagName.equalsIgnoreCase(ReceiveResponse.ERROR_CODE)){
                             receiveResponse.setErrorCode(Integer.parseInt(text));
                         }
                         if(tagName.equalsIgnoreCase(ReceiveResponse.ERROR_DETAILS)){
                             receiveResponse.setErrorDetails(text);
-                        }
-                        if(tagName.equalsIgnoreCase(ReceiveResponse.MESSAGE)){
-                            receiveResponse.setMessage(text);
                         }
                         if(tagName.equalsIgnoreCase(ReceiveResponse.TIME)){
                             receiveResponse.setTime(text);

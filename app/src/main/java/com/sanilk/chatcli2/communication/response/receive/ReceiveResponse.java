@@ -1,14 +1,20 @@
 package com.sanilk.chatcli2.communication.response.receive;
 
 import com.sanilk.chatcli2.communication.response.MyResponse;
+import com.sanilk.chatcli2.database.Entities.Message;
+
+import java.util.ArrayList;
 
 /**
  * Created by sanil on 30/11/17.
  */
 
 public class ReceiveResponse extends MyResponse{
-    public static final String SUCCESSFUL="successful";
+    public static final String SUCCESSFUL="succesful";
     public static final String TYPE="RECEIVE";
+    public static final String MESSAGES_ROOT="messages";
+    public static final String CONTENTS="contents";
+    public static final String ENCRYPTION_DURATION="encryption_duration";
     public static final String MESSAGE="message";
     public static final String TIME="time_of_sending";
     public final static String ERROR_CODE="error_code";
@@ -17,8 +23,13 @@ public class ReceiveResponse extends MyResponse{
     private boolean successful;
     private int errorCode;
     private String errorDetails;
-    private String message;
     private String time;
+
+    public ArrayList<Message> messages;
+
+    public ReceiveResponse(){
+        messages=new ArrayList<>();
+    }
 
     public boolean isSuccessful() {
         return successful;
@@ -42,14 +53,6 @@ public class ReceiveResponse extends MyResponse{
 
     public void setErrorDetails(String errorDetails) {
         this.errorDetails = errorDetails;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public String getTime() {
