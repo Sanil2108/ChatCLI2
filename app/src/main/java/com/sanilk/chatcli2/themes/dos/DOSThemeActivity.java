@@ -86,10 +86,14 @@ public class DOSThemeActivity extends Activity {
     private ScrollView mainScrollView;
 
     private ImageView dosEncryptButton;
-    private boolean currentMessageLocked=false;
+    private boolean encryptButtonActive =false;
+    private static final int DEFAULT_ENCRYPTION_DURATION=60;
+    private int currentEncryptionDuration=DEFAULT_ENCRYPTION_DURATION;
 
     //SQLite code
     private DatabaseOpenHelper databaseOpenHelper;
+
+    private static final boolean DEBUG=true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,19 +144,19 @@ public class DOSThemeActivity extends Activity {
             @Override
             public void onClick(View v) {
                 if(Build.VERSION.SDK_INT>=24) {
-                    if (currentMessageLocked) {
-                        currentMessageLocked = false;
+                    if (encryptButtonActive) {
+                        encryptButtonActive = false;
                         dosEncryptButton.setImageDrawable(getDrawable(R.drawable.unlocked));
                     } else {
-                        currentMessageLocked = true;
+                        encryptButtonActive = true;
                         dosEncryptButton.setImageDrawable(getDrawable(R.drawable.locked));
                     }
                 }else{
-                    if (currentMessageLocked) {
-                        currentMessageLocked = false;
+                    if (encryptButtonActive) {
+                        encryptButtonActive = false;
                         dosEncryptButton.setImageDrawable(getResources().getDrawable(R.drawable.unlocked));
                     } else {
-                        currentMessageLocked = true;
+                        encryptButtonActive = true;
                         dosEncryptButton.setImageDrawable(getResources().getDrawable(R.drawable.locked));
                     }
                 }
@@ -160,7 +164,9 @@ public class DOSThemeActivity extends Activity {
         });
 
         databaseOpenHelper =new DatabaseOpenHelper(this);
-        databaseOpenHelper.clear();
+        if(DEBUG) {
+            databaseOpenHelper.clear();
+        }
     }
 
     private void storeLastLogin(){
@@ -576,13 +582,21 @@ public class DOSThemeActivity extends Activity {
                     for(int i=0;i<cmd.length;i++){
                         message+=cmd[i]+" ";
                     }
-                    displayMessage(message, MESSAGE_TYPE.SENT);
-                    com.sanilk.chatcli2.database.Entities.Message actualMessage=
-                            new com.sanilk.chatcli2.database.Entities.Message(
-                                    message,
-                                    //actually put actual encryption duration here
-                                    -1
-                            );
+                    com.sanilk.chatcli2.database.Entities.Message actualMessage;
+                    if(encryptButtonActive){
+                        actualMessage=new com.sanilk.chatcli2.database.Entities.Message(
+                                message,
+                                currentEncryptionDuration
+                        );
+                        displayEncryptedMessage(actualMessage, MESSAGE_TYPE.SENT);
+                    }else{
+                        displayMessage(message, MESSAGE_TYPE.SENT);
+                        actualMessage=
+                                new com.sanilk.chatcli2.database.Entities.Message(
+                                        message,
+                                        -1
+                                );
+                    }
                     sendMessage(actualMessage);
                     databaseOpenHelper.newMessage(
                             new User(senderClient.getNick()),
@@ -603,6 +617,37 @@ public class DOSThemeActivity extends Activity {
         themeCommsRegistered=false;
         themeComms.disconnect();
         themeComms=null;
+    }
+
+    public void displayEncryptedMessage(com.sanilk.chatcli2.database.Entities.Message message, MESSAGE_TYPE messageType){
+        Log.d("DOSTheme - encrypted", message.contents);
+        if(LOGGING) {
+            Date currentDateAndTime = new Date();
+            String messageTypeForLogFile = "N/A";
+            switch (messageType) {
+                case DEFAULT:
+                    messageTypeForLogFile = "SYSTEM";
+                    break;
+                case ERROR:
+                    messageTypeForLogFile = "ERROR";
+                    break;
+                case RECEIVED:
+                    messageTypeForLogFile = "RECEIVED";
+                    break;
+                case SENT:
+                    messageTypeForLogFile = "SENT";
+                    break;
+            }
+            SharedPreferences sharedPreferences = getApplicationContext().getSharedPreferences(LOG_FILE_NAME, MODE_PRIVATE);
+            String logString = sharedPreferences.getString(LOG_FILE_KEY, "") + "\n" + currentDateAndTime + "\tFrom display message " + messageTypeForLogFile + ":" + message + "\t" +
+                    ((senderClient == null) ? "null" : senderClient.getNick()) + "\t" +
+                    ((senderClient == null) ? "null" : senderClient.getPass()) + "\t" +
+                    loggedIn + "\t" + themeCommsRegistered + "\t" + currentReceiver + "\t" + connected;
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(LOG_FILE_KEY, logString);
+            editor.commit();
+        }
+        receiverThreadRunnable.setEncryptedMessage(message, messageType);
     }
 
     public void displayMessage(String message, MESSAGE_TYPE messageType) {
@@ -684,7 +729,7 @@ public class DOSThemeActivity extends Activity {
                             new com.sanilk.chatcli2.database.Entities.Message(message.contents, -1)
                     );
                     if(message.encryptDuration>0){
-                        //dont call display message here. do some other shit.
+                        displayEncryptedMessage(message, MESSAGE_TYPE.RECEIVED);
                     }else {
                         displayMessage(message.contents+"\n", MESSAGE_TYPE.RECEIVED);
                     }
@@ -705,28 +750,50 @@ public class DOSThemeActivity extends Activity {
         String message="";
         MESSAGE_TYPE messageType;
 
+        com.sanilk.chatcli2.database.Entities.Message encryptedMessage = null;
+        MESSAGE_TYPE encryptedMessageType;
+
         public void setMessage(String string, MESSAGE_TYPE messageType){
             message+=string;
             this.messageType=messageType;
+        }
+
+        public void setEncryptedMessage(com.sanilk.chatcli2.database.Entities.Message encryptedMessage, MESSAGE_TYPE encryptedMessageType){
+            this.encryptedMessage=encryptedMessage;
+            this.encryptedMessageType=encryptedMessageType;
         }
 
         @Override
         public void run() {
             while(true) {
                 receiveMessage();
+                try {
+                    Thread.sleep(100);
+                }catch (Exception e){
+                    Log.wtf(TAG, "Error in receiving messages");
+                }
+
+                //Normal message
                 if(message!="") {
-                    try {
-                        Thread.sleep(100);
-                    }catch (Exception e){
-                        Log.wtf(TAG, "Error in receiving messages");
-                    }
                     Message msg = Message.obtain();
                     MessageTypeAndMessage messageTypeAndMessage = new MessageTypeAndMessage(messageType, message);
                     msg.obj = messageTypeAndMessage;
                     uiHandler.sendMessage(msg);
                     message = "";
-                    receiveMessage();
                 }
+
+                //Encrypted message
+                if(encryptedMessage.contents!="" && encryptedMessage!=null){
+                    Message msg=Message.obtain();
+                    EncryptedMessageTypeAndMessage encryptedMessageTypeAndMessage =
+                            new EncryptedMessageTypeAndMessage(encryptedMessageType, encryptedMessage);
+                    msg.obj=encryptedMessageTypeAndMessage;
+                    uiHandler.sendMessage(msg);
+                    encryptedMessageTypeAndMessage=null;
+                }
+
+
+                receiveMessage();
             }
         }
     }
@@ -750,6 +817,16 @@ public class DOSThemeActivity extends Activity {
         public MessageTypeAndMessage(MESSAGE_TYPE messageType, String message){
             this.message=message;
             this.messageType=messageType;
+        }
+    }
+
+    private class EncryptedMessageTypeAndMessage{
+        MESSAGE_TYPE message_type;
+        com.sanilk.chatcli2.database.Entities.Message message;
+
+        public EncryptedMessageTypeAndMessage(MESSAGE_TYPE message_type, com.sanilk.chatcli2.database.Entities.Message message){
+            this.message=message;
+            this.message_type=message_type;
         }
     }
 }
