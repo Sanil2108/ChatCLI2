@@ -28,6 +28,9 @@ import com.sanilk.chatcli2.themes.ThemeComms;
 import java.util.ArrayList;
 import java.util.Date;
 
+import encryption.AllEncryptedMessages;
+import encryption.EncryptionMessageRunnable;
+
 
 public class DOSThemeActivity extends Activity {
 
@@ -89,6 +92,7 @@ public class DOSThemeActivity extends Activity {
     private boolean encryptButtonActive =false;
     private static final int DEFAULT_ENCRYPTION_DURATION=60;
     private int currentEncryptionDuration=DEFAULT_ENCRYPTION_DURATION;
+    private EncryptionMessageRunnable encryptionMessageRunnable;
 
     //SQLite code
     private DatabaseOpenHelper databaseOpenHelper;
@@ -167,6 +171,9 @@ public class DOSThemeActivity extends Activity {
         if(DEBUG) {
             databaseOpenHelper.clear();
         }
+
+        encryptionMessageRunnable=new EncryptionMessageRunnable(uiHandler);
+        encryptionMessageRunnable.startThread();
     }
 
     private void storeLastLogin(){
@@ -192,92 +199,116 @@ public class DOSThemeActivity extends Activity {
     }
 
     public void handleMessageAgain(Message msg){
-        MessageTypeAndMessage messageTypeAndMessage = (MessageTypeAndMessage) msg.obj;
-        final String message = messageTypeAndMessage.message;
-        final MESSAGE_TYPE messageType = messageTypeAndMessage.messageType;
+        CustomMessage customMessage=(CustomMessage)msg.obj;
+        switch (customMessage.custom_message) {
+            case ENCRYPTED_MESSAGE:
+                //Do thread instantiation and stuff like that here
+                EncryptedMessageTypeAndMessage encryptedMessageTypeAndMessage=
+                        (EncryptedMessageTypeAndMessage)customMessage;
+                com.sanilk.chatcli2.database.Entities.Message message2=new
+                        com.sanilk.chatcli2.database.Entities.Message(
+                        encryptedMessageTypeAndMessage.message.contents,
+                        encryptedMessageTypeAndMessage.message.encryptDuration
+                        );
+                AllEncryptedMessages.getAllEncryptedMessages().getMessages().add(message2);
+            case NORMAL_MESSAGE:
+                MessageTypeAndMessage messageTypeAndMessage = (MessageTypeAndMessage) msg.obj;
+                final String message = messageTypeAndMessage.message;
+                final MESSAGE_TYPE messageType = messageTypeAndMessage.messageType;
 
-        senderTextView = new TextView(context);
-        messageTextView = new TextView(context);
+                senderTextView = new TextView(context);
+                messageTextView = new TextView(context);
 
-        if (message != null && message != "") {
-            final LinearLayout linearLayout = new LinearLayout(context);
-            linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-            linearLayout.setPadding(0, 0, 0, 0);
-//                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
-            senderTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-            messageTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-            if (Build.VERSION.SDK_INT > 23) {
-                switch (messageType) {
-                    case DEFAULT:
-                        senderTextView.setText("SYSTEM>");
-                        senderTextView.setTextColor(getColor(R.color.DOSText));
-                        messageTextView.setTextColor(getColor(R.color.DOSText));
-                        break;
-                    case RECEIVED:
-                        senderTextView.setText(currentReceiver + ">");
-                        senderTextView.setTextColor(getColor(R.color.DOSReceiver));
-                        messageTextView.setTextColor(getColor(R.color.DOSReceiver));
-                        break;
-                    case SENT:
-                        senderTextView.setText(senderClient.getNick() + ">");
-                        senderTextView.setTextColor(getColor(R.color.DOSSender));
-                        messageTextView.setTextColor(getColor(R.color.DOSSender));
-                        break;
-                    case ERROR:
-                        senderTextView.setText("ERROR>");
-                        senderTextView.setTextColor(getColor(R.color.DOSErrorText));
-                        messageTextView.setTextColor(getColor(R.color.DOSErrorText));
-                        senderTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
-                        messageTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
-                        break;
-                }
-            } else {
-                switch (messageType) {
-                    case DEFAULT:
-                        senderTextView.setText("SYSTEM>");
-                        senderTextView.setTextColor(getResources().getColor(R.color.DOSText));
-                        messageTextView.setTextColor(getResources().getColor(R.color.DOSText));
-                        break;
-                    case RECEIVED:
-                        senderTextView.setText(currentReceiver + ">");
-                        senderTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
-                        messageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
-                        break;
-                    case SENT:
-                        senderTextView.setText(senderClient.getNick() + ">");
-                        senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
-                        messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
-                        break;
-                    case ERROR:
-                        senderTextView.setText("ERROR>");
-                        senderTextView.setTextColor(getResources().getColor(R.color.DOSErrorText));
-                        messageTextView.setTextColor(getResources().getColor(R.color.DOSErrorText));
-                        senderTextView.setBackgroundColor(getResources().getColor(R.color.DOSErrorBackground));
-                        messageTextView.setBackgroundColor(getResources().getColor(R.color.DOSErrorBackground));
-                        break;
-                }
-            }
-            senderTextView.setGravity(1);
-            messageTextView.setGravity(3);
-            messageTextView.setText(message);
-            linearLayout.addView(senderTextView);
-            linearLayout.addView(messageTextView);
-
-            mainContainer.addView(linearLayout);
-
-            //ERRORs can't be selected
-            if(messageType!=MESSAGE_TYPE.ERROR && messageType!=MESSAGE_TYPE.DEFAULT) {
-                linearLayout.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        newTextViewSelected(linearLayout, (TextView)linearLayout.getChildAt(0), (TextView)linearLayout.getChildAt(1), messageType);
+                if (message != null && message != "") {
+                    final LinearLayout linearLayout = new LinearLayout(context);
+                    linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+                    linearLayout.setPadding(0, 0, 0, 0);
+    //                    linearLayout.setLayoutParams(new LinearLayout.LayoutParams(this));
+                    senderTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+                    messageTextView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+                    if (Build.VERSION.SDK_INT > 23) {
+                        switch (messageType) {
+                            case DEFAULT:
+                                senderTextView.setText("SYSTEM>");
+                                senderTextView.setTextColor(getColor(R.color.DOSText));
+                                messageTextView.setTextColor(getColor(R.color.DOSText));
+                                break;
+                            case RECEIVED:
+                                senderTextView.setText(currentReceiver + ">");
+                                senderTextView.setTextColor(getColor(R.color.DOSReceiver));
+                                messageTextView.setTextColor(getColor(R.color.DOSReceiver));
+                                break;
+                            case SENT:
+                                senderTextView.setText(senderClient.getNick() + ">");
+                                senderTextView.setTextColor(getColor(R.color.DOSSender));
+                                messageTextView.setTextColor(getColor(R.color.DOSSender));
+                                break;
+                            case ERROR:
+                                senderTextView.setText("ERROR>");
+                                senderTextView.setTextColor(getColor(R.color.DOSErrorText));
+                                messageTextView.setTextColor(getColor(R.color.DOSErrorText));
+                                senderTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
+                                messageTextView.setBackgroundColor(getColor(R.color.DOSErrorBackground));
+                                break;
+                        }
+                    } else {
+                        switch (messageType) {
+                            case DEFAULT:
+                                senderTextView.setText("SYSTEM>");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSText));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSText));
+                                break;
+                            case RECEIVED:
+                                senderTextView.setText(currentReceiver + ">");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSReceiver));
+                                break;
+                            case SENT:
+                                senderTextView.setText(senderClient.getNick() + ">");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSSender));
+                                break;
+                            case ERROR:
+                                senderTextView.setText("ERROR>");
+                                senderTextView.setTextColor(getResources().getColor(R.color.DOSErrorText));
+                                messageTextView.setTextColor(getResources().getColor(R.color.DOSErrorText));
+                                senderTextView.setBackgroundColor(getResources().getColor(R.color.DOSErrorBackground));
+                                messageTextView.setBackgroundColor(getResources().getColor(R.color.DOSErrorBackground));
+                                break;
+                        }
                     }
-                });
-            }
-            mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
-            mainScrollView.scrollTo(0, mainContainer.getBottom());
-            cli.requestFocus();
+                    senderTextView.setGravity(1);
+                    messageTextView.setGravity(3);
+                    messageTextView.setText(message);
+                    linearLayout.addView(senderTextView);
+                    linearLayout.addView(messageTextView);
+
+                    mainContainer.addView(linearLayout);
+
+                    //ERRORs can't be selected
+                    if (messageType != MESSAGE_TYPE.ERROR && messageType != MESSAGE_TYPE.DEFAULT) {
+                        linearLayout.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                newTextViewSelected(linearLayout, (TextView) linearLayout.getChildAt(0), (TextView) linearLayout.getChildAt(1), messageType);
+                            }
+                        });
+                    }
+                    mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+                    mainScrollView.scrollTo(0, mainContainer.getBottom());
+                    cli.requestFocus();
+                }
+                break;
+
+            //called by the encrypted message thread to update the ui
+            case UPDATE_UI:
+                EncryptionMessageRunnable.EncryptionMessageRunnableMessage
+                        encryptionMessageRunnableMessage =
+                        (EncryptionMessageRunnable.EncryptionMessageRunnableMessage) msg.obj;
+                //Somehow delete the old message and replace it. fuck this is more difficult than i expected it to be
+                break;
         }
+
 
     }
 
@@ -810,23 +841,45 @@ public class DOSThemeActivity extends Activity {
         return super.onKeyUp(keyCode, event);
     }
 
-    private class MessageTypeAndMessage{
+    private class MessageTypeAndMessage extends CustomMessage{
         MESSAGE_TYPE messageType;
         String message;
 
         public MessageTypeAndMessage(MESSAGE_TYPE messageType, String message){
+            custom_message=CUSTOM_MESSAGE.NORMAL_MESSAGE;
             this.message=message;
             this.messageType=messageType;
         }
     }
 
-    private class EncryptedMessageTypeAndMessage{
+    private class EncryptedMessageTypeAndMessage extends MessageTypeAndMessage{
         MESSAGE_TYPE message_type;
         com.sanilk.chatcli2.database.Entities.Message message;
 
         public EncryptedMessageTypeAndMessage(MESSAGE_TYPE message_type, com.sanilk.chatcli2.database.Entities.Message message){
+            super(message_type, message.contents);
+            custom_message=CUSTOM_MESSAGE.ENCRYPTED_MESSAGE;
             this.message=message;
             this.message_type=message_type;
         }
+    }
+
+    private enum CUSTOM_MESSAGE{
+        //To print a normal message on the screen
+        NORMAL_MESSAGE,
+        //To print an encrypted message on the screen
+        ENCRYPTED_MESSAGE,
+        //Used by encrypted message thread to update the message
+        UPDATE_UI
+    }
+
+    private abstract class CustomMessage{
+        public CUSTOM_MESSAGE custom_message;
+    }
+
+    @Override
+    protected void onStop() {
+        encryptionMessageRunnable.stopThread();
+        super.onStop();
     }
 }
