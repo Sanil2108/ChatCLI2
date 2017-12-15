@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,6 +29,7 @@ import com.sanilk.chatcli2.themes.ThemeComms;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Random;
 
 import com.sanilk.chatcli2.encryption.AllEncryptedMessages;
@@ -95,7 +97,7 @@ public class DOSThemeActivity extends Activity {
     private static final int DEFAULT_ENCRYPTION_DURATION=60;
     private int currentEncryptionDuration=DEFAULT_ENCRYPTION_DURATION;
     private EncryptionMessageRunnable encryptionMessageRunnable;
-    private ArrayList<TextView> allMessageTextViews;
+    private HashMap<TextView, Boolean> allMessageTextViews;
     private ArrayList<String> allMessageTextViewsOriginalText;
     private Random random;
 
@@ -179,10 +181,14 @@ public class DOSThemeActivity extends Activity {
 
         encryptionMessageRunnable=new EncryptionMessageRunnable(uiHandler);
         encryptionMessageRunnable.startThread();
-        allMessageTextViews=new ArrayList<>();
+        allMessageTextViews=new HashMap<>();
         allMessageTextViewsOriginalText=new ArrayList<>();
 
         random=new Random();
+
+        if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        }
     }
 
     private void storeLastLogin(){
@@ -289,7 +295,7 @@ public class DOSThemeActivity extends Activity {
 
                     final EncryptedMessageTypeAndMessage encryptedMessageTypeAndMessage=
                             (EncryptedMessageTypeAndMessage)customMessage;
-                    com.sanilk.chatcli2.database.Entities.Message message2=new
+                    final com.sanilk.chatcli2.database.Entities.Message message2=new
                             com.sanilk.chatcli2.database.Entities.Message(
                             encryptedMessageTypeAndMessage.message.contents,
                             encryptedMessageTypeAndMessage.message.encryptDuration
@@ -301,11 +307,11 @@ public class DOSThemeActivity extends Activity {
                             @Override
                             public void onClick(View view) {
                                 encryptedTextViewSelected(linearLayout, (TextView) linearLayout.getChildAt(0), (TextView) linearLayout.getChildAt(1), messageType,
-                                        encryptedMessageTypeAndMessage.message);
+                                        message2);
                             }
                         });
                     }
-                    allMessageTextViews.add(messageTextView);
+                    allMessageTextViews.put(messageTextView, false);
 
                     mainScrollView.fullScroll(ScrollView.FOCUS_DOWN);
                     mainScrollView.scrollTo(0, mainContainer.getBottom());
@@ -411,13 +417,16 @@ public class DOSThemeActivity extends Activity {
                 EncryptionMessageRunnable.EncryptionMessageRunnableMessage
                         encryptionMessageRunnableMessage =
                         (EncryptionMessageRunnable.EncryptionMessageRunnableMessage) msg.obj;
-                for(TextView t:allMessageTextViews){
-                    char[] originalText=t.getText().toString().toCharArray();
-                    for(int i2=0;i2<originalText.length;i2++){
-                        originalText[i2]=(char)(random.nextInt(74)+48);
+                for(int i=0;i<allMessageTextViews.size();i++){
+                    TextView t=(TextView)allMessageTextViews.keySet().toArray()[i];
+                    if(!allMessageTextViews.get(t)) {
+                        char[] originalText = t.getText().toString().toCharArray();
+                        for (int i2 = 0; i2 < originalText.length; i2++) {
+                            originalText[i2] = (char) (random.nextInt(74) + 48);
+                        }
+                        String temp = new String(originalText);
+                        t.setText(temp);
                     }
-                    String temp=new String(originalText);
-                    t.setText(temp);
                 }
                 break;
         }
@@ -427,13 +436,25 @@ public class DOSThemeActivity extends Activity {
 
     private void encryptedTextViewSelected(LinearLayout linearLayout, TextView senderTextView, TextView messageTextView, MESSAGE_TYPE message_type,
                                            com.sanilk.chatcli2.database.Entities.Message message){
-        newTextViewSelected(linearLayout, senderTextView, messageTextView, message_type);
-        if(AllEncryptedMessages.getAllEncryptedMessages().getDuration().containsKey(message) &&
-                AllEncryptedMessages.getAllEncryptedMessages().getDuration().get(message)>0){
-            messageTextView.setText(message.contents);
-        }else{
-            messageTextView.setText("Message contents no longer available.");
+        messageTextView.setText(message.contents);
+        if(message.isSelected()) {
+            message.setSelected(false);
+            allMessageTextViews.remove(messageTextView);
+            allMessageTextViews.put(messageTextView, false);
+        }else {
+            boolean temp=AllEncryptedMessages.getAllEncryptedMessages().getDuration().containsKey(message);
+            Integer temp2=AllEncryptedMessages.getAllEncryptedMessages().getDuration().get(message);
+            if(AllEncryptedMessages.getAllEncryptedMessages().getDuration().containsKey(message) &&
+                    AllEncryptedMessages.getAllEncryptedMessages().getDuration().get(message)>0){
+                messageTextView.setText(message.contents);
+            }else{
+                messageTextView.setText("Message contents no longer available.");
+            }
+            allMessageTextViews.remove(messageTextView);
+            allMessageTextViews.put(messageTextView, true);
+            message.setSelected(true);
         }
+        newTextViewSelected(linearLayout, senderTextView, messageTextView, message_type);
     }
 
     private void newTextViewSelected(LinearLayout linearLayout, TextView senderTextView, TextView messageTextView, MESSAGE_TYPE messageType){
@@ -649,15 +670,15 @@ public class DOSThemeActivity extends Activity {
             case "@conn":
                 try {
                     if(connected){
-                        displayMessage("breaking connection to " + currentReceiver + " ...", MESSAGE_TYPE.DEFAULT);
+                        displayMessage("Breaking connection to " + currentReceiver + " ... \n", MESSAGE_TYPE.DEFAULT);
                         destroyConnection(senderClient.getNick(), currentReceiver);
-                        displayMessage("Connection successfully broken", MESSAGE_TYPE.DEFAULT);
+                        displayMessage("Connection successfully broken. \n", MESSAGE_TYPE.DEFAULT);
                         currentReceiver = "";
                         connected = false;
                     }
 
                     receiver = cmd[1];
-                    displayMessage("Establishing connection to "+receiver+" ...", MESSAGE_TYPE.DEFAULT);
+                    displayMessage("Establishing connection to "+receiver+" ... .\n", MESSAGE_TYPE.DEFAULT);
                     //maybe add a percentage thing here. would need delete message method which deletes the last message though
                     establishConnection(senderClient.getNick(), receiver);
                     connected=true;

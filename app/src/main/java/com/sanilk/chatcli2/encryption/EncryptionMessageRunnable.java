@@ -50,14 +50,15 @@ public class EncryptionMessageRunnable implements Runnable {
             }
             for (Message message : AllEncryptedMessages.getAllEncryptedMessages().getMessages()){
                 Integer remainingDuration = AllEncryptedMessages.getAllEncryptedMessages().getDuration().remove(message);
-                EncryptionMessageRunnableMessage encryptionMessageRunnableMessage
-                        =new EncryptionMessageRunnableMessage();
-                android.os.Message msg= android.os.Message.obtain();
-                msg.obj=encryptionMessageRunnableMessage;
+                EncryptionMessageRunnableMessage encryptionMessageRunnableMessage;
+                encryptionMessageRunnableMessage
+                        = new EncryptionMessageRunnableMessage();
+                android.os.Message msg = android.os.Message.obtain();
+                msg.obj = encryptionMessageRunnableMessage;
                 uiHandler.sendMessage(msg);
-                if(remainingDuration>0){
-                    AllEncryptedMessages.getAllEncryptedMessages().getDuration().put(message, remainingDuration-MILLISECONDS);
-                }else{
+                if (remainingDuration > 0) {
+                    AllEncryptedMessages.getAllEncryptedMessages().getDuration().put(message, remainingDuration - MILLISECONDS);
+                } else {
                     AllEncryptedMessages.getAllEncryptedMessages().getDuration().put(message, -1);
 //                    AllEncryptedMessages.getAllEncryptedMessages().getMessages().remove(message);
                 }

@@ -12,6 +12,8 @@ public class Message {
     public String contents;
     public int encryptDuration;
 
+    private boolean selected;
+
     public Message(String contents, String timeAndDate, int encryptDuration){
         this.timeAndDate=timeAndDate;
         this.contents=contents;
@@ -22,5 +24,13 @@ public class Message {
         this.encryptDuration=encryptDuration;
         this.contents=contents;
         this.timeAndDate= DateFormat.getDateTimeInstance().format(new Date());
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }
