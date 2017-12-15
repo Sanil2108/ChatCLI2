@@ -1,4 +1,4 @@
-package encryption;
+package com.sanilk.chatcli2.encryption;
 
 import com.sanilk.chatcli2.database.Entities.Message;
 

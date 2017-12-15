@@ -1,9 +1,10 @@
-package encryption;
+package com.sanilk.chatcli2.encryption;
 
 import android.os.Handler;
 import android.util.Log;
 
 import com.sanilk.chatcli2.database.Entities.Message;
+import com.sanilk.chatcli2.themes.dos.DOSThemeActivity;
 
 /**
  * Created by sanil on 14/12/17.
@@ -49,21 +50,24 @@ public class EncryptionMessageRunnable implements Runnable {
             }
             for (Message message : AllEncryptedMessages.getAllEncryptedMessages().getMessages()){
                 Integer remainingDuration = AllEncryptedMessages.getAllEncryptedMessages().getDuration().remove(message);
+                EncryptionMessageRunnableMessage encryptionMessageRunnableMessage
+                        =new EncryptionMessageRunnableMessage();
+                android.os.Message msg= android.os.Message.obtain();
+                msg.obj=encryptionMessageRunnableMessage;
+                uiHandler.sendMessage(msg);
                 if(remainingDuration>0){
                     AllEncryptedMessages.getAllEncryptedMessages().getDuration().put(message, remainingDuration-MILLISECONDS);
-                    EncryptionMessageRunnableMessage encryptionMessageRunnableMessage
-                            =new EncryptionMessageRunnableMessage();
-                    android.os.Message msg= android.os.Message.obtain();
-                    msg.obj=encryptionMessageRunnableMessage;
-                    uiHandler.sendMessage(msg);
                 }else{
-                    AllEncryptedMessages.getAllEncryptedMessages().getMessages().remove(message);
+                    AllEncryptedMessages.getAllEncryptedMessages().getDuration().put(message, -1);
+//                    AllEncryptedMessages.getAllEncryptedMessages().getMessages().remove(message);
                 }
             }
         }
     }
 
-    public class EncryptionMessageRunnableMessage{
-
+    public class EncryptionMessageRunnableMessage extends CustomMessage{
+        EncryptionMessageRunnableMessage(){
+            custom_message=CUSTOM_MESSAGE.UPDATE_UI;
+        }
     }
 }
