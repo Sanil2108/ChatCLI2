@@ -139,6 +139,7 @@ public class DOSThemeActivity extends Activity {
 
         selectedLinearLayout=null;
 
+
         Client oldClient = getLastLogin();
         if(oldClient!=null){
             if(themeComms.checkIfClientIsAuthentic(oldClient.getNick(), oldClient.getPass(), this)){
@@ -401,7 +402,7 @@ public class DOSThemeActivity extends Activity {
                         linearLayout.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View view) {
-                                newTextViewSelected(linearLayout, (TextView) linearLayout.getChildAt(0), (TextView) linearLayout.getChildAt(1), messageType2);
+                                newTextViewSelected(linearLayout, (TextView) linearLayout.getChildAt(0), (TextView) linearLayout.getChildAt(1), messageType2, false);
                             }
                         });
                     }
@@ -441,7 +442,16 @@ public class DOSThemeActivity extends Activity {
             message.setSelected(false);
             allMessageTextViews.remove(messageTextView);
             allMessageTextViews.put(messageTextView, false);
+
+            newTextViewSelected(linearLayout, senderTextView, messageTextView, message_type, true);
+
+            encryptedTextViewSelected=false;
+            messageSelected=null;
         }else {
+            if(encryptedTextViewSelected){
+                encryptedTextViewSelectedAfterEncryptedTextView(message, messageTextView);
+            }
+//            isEncryptedMessageSelected=true;
             boolean temp=AllEncryptedMessages.getAllEncryptedMessages().getDuration().containsKey(message);
             Integer temp2=AllEncryptedMessages.getAllEncryptedMessages().getDuration().get(message);
             if(AllEncryptedMessages.getAllEncryptedMessages().getDuration().containsKey(message) &&
@@ -453,12 +463,50 @@ public class DOSThemeActivity extends Activity {
             allMessageTextViews.remove(messageTextView);
             allMessageTextViews.put(messageTextView, true);
             message.setSelected(true);
+//            this.messageSelected=message;
+//            isEncryptedMessageSelected=true;
+
+            newTextViewSelected(linearLayout, senderTextView, messageTextView, message_type, true);
+            encryptedTextViewSelected=true;
+            messageSelected=message;
+
+            this.messageTextView=messageTextView;
         }
-        newTextViewSelected(linearLayout, senderTextView, messageTextView, message_type);
+
     }
 
-    private void newTextViewSelected(LinearLayout linearLayout, TextView senderTextView, TextView messageTextView, MESSAGE_TYPE messageType){
+    boolean encryptedTextViewSelected=false;
+    com.sanilk.chatcli2.database.Entities.Message messageSelected;
 
+    private void normalTextViewSelectedAfterEncryptedMessageTextView(com.sanilk.chatcli2.database.Entities.Message message){
+        if(message==null){return;}
+        String temp=messageSelected.contents;
+        message.setSelected(false);
+        allMessageTextViews.remove(messageTextView);
+        allMessageTextViews.put(messageTextView, false);
+    }
+
+    private void encryptedTextViewSelectedAfterEncryptedTextView(com.sanilk.chatcli2.database.Entities.Message message, TextView messageTextView){
+        if(message==null){return;}
+        message.setSelected(false);
+        this.messageSelected.setSelected(false);
+        String temp=this.messageTextView.getText().toString();
+        allMessageTextViews.remove(this.messageTextView);
+        allMessageTextViews.put(this.messageTextView, false);
+    }
+
+    private void newTextViewSelected(LinearLayout linearLayout, TextView senderTextView, TextView messageTextView, MESSAGE_TYPE messageType, boolean newViewSelectedIsEncrypted){
+        if(encryptedTextViewSelected && !newViewSelectedIsEncrypted){
+            normalTextViewSelectedAfterEncryptedMessageTextView(messageSelected);
+        }
+        if(!newViewSelectedIsEncrypted){
+            encryptedTextViewSelected=false;
+        }
+//        if(messageSelected.isSelected()){
+//            messageSelected.setSelected(false);
+//            allMessageTextViews.remove(messageTextView);
+//            allMessageTextViews.put(messageTextView, false);
+//        }
         if(selectedLinearLayout!=null) {
             if (Build.VERSION.SDK_INT > 23) {
                 selectedLinearLayout.setBackgroundColor(getColor(R.color.DOSBackground));
@@ -692,15 +740,17 @@ public class DOSThemeActivity extends Activity {
                         databaseOpenHelper.insertConnection(clientUser, connectedUser);
                     }
 
-                    LayoutInflater inflater=(LayoutInflater)context.getSystemService(this.LAYOUT_INFLATER_SERVICE);
-                    inflater.inflate(R.layout.dostheme_button, mainContainer, true);
-                    TextView buttonTextView=(TextView)findViewById(R.id.dos_button_textview);
-                    buttonTextView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            Log.d("DOSThemeActivity", "Load previous messages here");
-                        }
-                    });
+                    //Some experimental code.
+                    //Maybe for some other theme...
+//                    LayoutInflater inflater=(LayoutInflater)context.getSystemService(this.LAYOUT_INFLATER_SERVICE);
+//                    inflater.inflate(R.layout.dostheme_button, mainContainer, true);
+//                    TextView buttonTextView=(TextView)findViewById(R.id.dos_button_textview);
+//                    buttonTextView.setOnClickListener(new View.OnClickListener() {
+//                        @Override
+//                        public void onClick(View v) {
+//                            Log.d("DOSThemeActivity", "Load previous messages here");
+//                        }
+//                    });
 
 //                    DOSButton dosButton=new DOSButton(this, "Load previous messages");
 //                    dosButton.setOnClickListener(new View.OnClickListener() {

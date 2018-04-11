@@ -28,7 +28,8 @@ import java.util.ArrayList;
 public class MainCommunication {
 
 //    private static final String ADDRESS="https://20171028t065813-dot-chat-cli.appspot.com/Servlet1";
-    private static final String ADDRESS="http://10.0.2.2:8080/Servlet1";
+//    private static final String ADDRESS="http://10.0.2.2:8080/Servlet1";
+    private static final String ADDRESS="https://chatcli.herokuapp.com/";
     private static final String DEFAULT_PASSWORD="root";
 
     Client receiver;
